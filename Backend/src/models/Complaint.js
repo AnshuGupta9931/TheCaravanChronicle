@@ -1,6 +1,6 @@
 import mongoose from "mongoose";
 
-const userSchema = new mongoose.Schema(
+const complaintSchema = new mongoose.Schema(
     {
         citizenId: { type: ObjectId, ref: "User" },
         type: { type: String, enum: ["Road Damage", "Water Leakage", "Garbage"] },
@@ -13,4 +13,4 @@ const userSchema = new mongoose.Schema(
     }
 )
 
-export const User = mongoose.model("User", userSchema);
+export const Complaint = mongoose.model("Complaint", complaintSchema);
