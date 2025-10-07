@@ -1,19 +1,21 @@
-const bcrypt = require("bcryptjs");
-const jwt = require("jsonwebtoken");
-const User = require("../models/User");
-import Profile from "../models/Profile.js";
-import OTP from "../models/OTP.js";
+// const bcrypt = require("bcryptjs");
+import bcrypt from "bcryptjs";
+// const jwt = require("jsonwebtoken");
+import jwt from "jsonwebtoken";
+import { User } from "../models/User.js";
+import {Profile} from "../models/Profile.js";
+import {OTP} from "../models/OTP.js";
 import otpGenerator from "otp-generator";
-import mailSender from "../utils/mailSender.js";
-import { otpTemplate } from "../mail/templates/otpTemplate.js"; // optional custom template
-import { passwordUpdated } from "../mail/templates/passwordUpdated.js"; // optional email template
+import { mailSender } from "../../utils/mailSender.js";
+import { otpTemplate } from "../../mail_templates/otpTemplate.js"; // optional custom template
+import { passwordUpdated } from "../../mail_templates/PasswordUpdate.js"; // optional email template
 
 // Send OTP to new user's email for registration
 export const sendOTP = async (req, res) => {
   try {
     const { email } = req.body;
 
-    // 1️⃣ Validate email input
+    // 1️⃣ Validate email inputs
     if (!email) {
       return res.status(400).json({
         success: false,
@@ -160,7 +162,7 @@ export const signup = async (req, res) => {
   }
 };
 
-exports.login = async (req, res) => {
+export const login = async (req, res) => {
   try {
     const { email, password } = req.body;
 

@@ -3,13 +3,21 @@ import cors from "cors";
 import dotenv from "dotenv";
 import mongoose from "mongoose";
 import reportRoutes from "./routes/reports.js";
+import complaintRoutes from "./routes/complaints.js"
+import userRoutes from "./routes/users.js";
+
+
 dotenv.config();
 const app = express();
 
 // middleware
 app.use(cors());
 app.use(express.json());
+app.use(express.urlencoded({ extended: true}));
 app.use("/api/v1/reports",reportRoutes);
+app.use("/api/v1/complaints", complaintRoutes);
+app.use("/api/v1/users", userRoutes);
+
 // sample route
 app.get("/", (req, res) => {
   res.send("Backend is running 🚀");

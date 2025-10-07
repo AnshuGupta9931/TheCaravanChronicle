@@ -75,6 +75,12 @@ const userSchema = new mongoose.Schema({
     push: { type: Boolean, default: false },
   },
 
+  complaints: [
+    {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Complaint",
+    },
+  ],
 
 //   friends: [
 //     {
