@@ -1,8 +1,8 @@
 {
   "name": "backend",
   "version": "1.0.0",
-  "description": "",
-  "main": "index.js",
+  "description": "Backend for our Caravan Chronicle Project",
+  "main": "src/server.js",
   "type": "module",
   "scripts": {
     "start": "node src/server.js",
