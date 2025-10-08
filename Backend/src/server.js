@@ -11,12 +11,17 @@ dotenv.config();
 const app = express();
 
 // middleware
-app.use(cors());
+app.use(
+  cors({
+    origin: "http://localhost:5173", // your frontend origin
+    credentials: true,              // allow cookies/auth headers
+  })
+);
 app.use(express.json());
 app.use(express.urlencoded({ extended: true}));
 app.use("/api/v1/reports",reportRoutes);
 app.use("/api/v1/complaints", complaintRoutes);
-app.use("/api/v1/users", userRoutes);
+app.use("/api/v1/auth", userRoutes);
 
 // sample route
 app.get("/", (req, res) => {

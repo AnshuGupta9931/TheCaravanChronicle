@@ -2,74 +2,73 @@ import { Complaint } from "../models/complaint.js";
 import { uploadOnCloudinary } from "../../utils/cloudinary.js";
 import { User } from "../models/User.js";
 
+// Placeholder for cleanup function (you need to implement this)
+const deleteFromCloudinary = async (imageUrls) => {
+    // Logic to delete files from Cloudinary using their secure_url or public_id
+    console.log("Cleanup function called for:", imageUrls);
+    return true; // Assume success for now
+};
+
 export const createComplaint = async (req, res) => {
+  const citizenId = req.user._id;
+  const { type, description, location } = req.body;
+  const files = req.files;
+  let imageUrls = [];
+
   try {
-    const citizenId = req.user._id;
-
-    // const { type, description, image } = req.body;
-    const { type, description, location } = req.body;
-
-    const files = req.files;
-
-    // Validate required fields
     if (!type || !description || !location || !files || files.length === 0) {
-        return res.status(400).json({
-            success: false,
-            message: "All fields and at least one image are required.",
-        });
+      return res.status(400).json({
+        success: false,
+        message: "All fields and at least one image are required.",
+      });
     }
 
-    // upload all images
-    const uploadPromises = files.map(file => uploadOnCloudinary(file.path));
+    // Upload each image to Cloudinary
+    const uploadPromises = files.map((file) => uploadOnCloudinary(file.path));
     const uploadResults = await Promise.all(uploadPromises);
 
-    //checking if any of the images is not uploaded
-    if (uploadResults.some(result => !result)) {
-        return res.status(500).json({
-            success: false,
-            message: "One or more image uploads failed. Please try again.",
-        });
+    if (uploadResults.some((result) => !result)) {
+      return res.status(500).json({
+        success: false,
+        message: "Image upload failed. Please try again.",
+      });
     }
 
-    const imageUrls = uploadResults.map(result => result.secure_url);
+    imageUrls = uploadResults.map((r) => r.secure_url);
 
-    // creata the complaint in the database
     const newComplaint = await Complaint.create({
-        citizenId,
-        type,
-        description,
-        location,
-        images: imageUrls, // Save the array of URLs
-        status: "OPEN",
+      citizenId,
+      type,
+      description,
+      location, // simple string, not geo point
+      images: imageUrls,
+      status: "OPEN",
     });
 
-    // linking the complaint to the citizen
-    await User.findByIdAndUpdate(citizenId, {
-        $push: { complaints: newComplaint._id },
-    });
+    await User.findByIdAndUpdate(
+      citizenId,
+      { $push: { complaints: newComplaint._id } },
+      { new: true }
+    );
 
     return res.status(201).json({
-        success: true,
-        message: "Complaint submitted successfully!",
-        data: newComplaint,
+      success: true,
+      message: "Complaint submitted successfully!",
+      data: newComplaint,
     });
-
-
   } catch (error) {
     console.error("Error while creating complaint:", error);
-    res
-      .status(500)
-      .json({ message: "Server error while submitting complaint." });
+    return res.status(500).json({
+      success: false,
+      message: "Server error while submitting complaint.",
+    });
   }
 };
 
 
 export const getAllComplaints = async (req, res) => {
     try {
-        // Find all complaints
-        const complaints = await Complaint.find({}).populate("citizenId", "name email") 
-            // showing the newest first
-            .sort({ createdAt: -1 }); 
+        const complaints = await Complaint.find({}).populate("citizenId", "name email").sort({ createdAt: -1 });
 
         return res.status(200).json({
             success: true,
@@ -77,7 +76,6 @@ export const getAllComplaints = async (req, res) => {
             count: complaints.length,
             data: complaints,
         });
-
     } catch (error) {
         console.error("Error while fetching complaints:", error);
         return res.status(500).json({
@@ -89,24 +87,30 @@ export const getAllComplaints = async (req, res) => {
 
 export const getMyComplaints = async (req, res) => {
     try {
-        //  complaints where citizenId matches the logged-in user and sort them
         const complaints = await Complaint.find({ citizenId: req.user._id }).sort({ createdAt: -1 });
-        
-        // Respond with the array of complaints
-        res.status(200).json(complaints);
 
+        return res.status(200).json({
+            success: true,
+            message: "Your complaints retrieved successfully.",
+            count: complaints.length,
+            data: complaints,
+        });
     } catch (error) {
         console.error('Error fetching user complaints:', error);
-        res.status(500).json({ message: 'Failed to fetch your complaints.' });
+        return res.status(500).json({ 
+            success: false,
+            message: 'Failed to fetch your complaints.' 
+        });
     }
 };
 
+
 export const updateComplaintStatus = async (req, res) => {
     try {
-        const { id: complaintId } = req.params._id;
+        // FIX: Correctly extract 'id' from req.params
+        const { id: complaintId } = req.params; 
         const { status } = req.body;
 
-        // Validate that the status is one of the allowed enum values from your schema
         const allowedStatuses = ["OPEN", "IN PROGRESS", "RESOLVED"];
         if (!allowedStatuses.includes(status)) {
             return res.status(400).json({ 
@@ -118,10 +122,9 @@ export const updateComplaintStatus = async (req, res) => {
         const updatedComplaint = await Complaint.findByIdAndUpdate(
             complaintId,
             { status },
-            { new: true, runValidators: true } // `new: true` returns the updated document
+            { new: true, runValidators: true }
         );
 
-        // If no complaint is found with that ID, return a 404 error
         if (!updatedComplaint) {
             return res.status(404).json({ 
                 success: false,
@@ -129,15 +132,14 @@ export const updateComplaintStatus = async (req, res) => {
             });
         }
 
-        res.status(200).json({
+        return res.status(200).json({
             success: true,
             message: 'Complaint status updated successfully.',
             data: updatedComplaint
         });
-        
     } catch (error) {
         console.error('Error updating complaint status:', error);
-        res.status(500).json({ 
+        return res.status(500).json({ 
             success: false,
             message: 'Failed to update complaint status due to a server error.' 
         });
