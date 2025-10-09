@@ -89,11 +89,12 @@ export const getMyComplaints = async (req, res) => {
     try {
         const complaints = await Complaint.find({ citizenId: req.user._id }).sort({ createdAt: -1 });
 
+
         return res.status(200).json({
             success: true,
             message: "Your complaints retrieved successfully.",
             count: complaints.length,
-            data: complaints,
+            complaints,
         });
     } catch (error) {
         console.error('Error fetching user complaints:', error);
@@ -103,7 +104,6 @@ export const getMyComplaints = async (req, res) => {
         });
     }
 };
-
 
 export const updateComplaintStatus = async (req, res) => {
     try {
@@ -145,3 +145,104 @@ export const updateComplaintStatus = async (req, res) => {
         });
     }
 };
+
+// ✅ Get a single complaint by ID
+export const getComplaintById = async (req, res) => {
+  try {
+    const { id } = req.params;
+    
+    const complainti = await Complaint.findById(id);
+    console.log("ani", complainti.toJSON());
+
+
+    const complaint = await Complaint.findById(id);
+
+    if (!complaint) {
+      return res.status(404).json({
+        success: false,
+        message: 'Complaint not found',
+      });
+    }
+
+    // ✅ Optionally restrict citizens to only their own complaints
+    if (req.user.accountType === 'Citizen' && complaint.citizenId.toString() !== req.user.id) {
+      return res.status(403).json({
+        success: false,
+        message: 'Unauthorized access to this complaint',
+      });
+    }
+
+    return res.status(200).json({
+      success: true,
+      message: 'Complaint retrieved successfully',
+      complaint,
+    });
+  } catch (error) {
+    console.error('Error fetching complaint by ID:', error);
+    return res.status(500).json({
+      success: false,
+      message: 'Server error while fetching complaint',
+      error: error.message,
+    });
+  }
+};
+
+// ✅ Update complaint details (citizen can edit description, location)
+export const updateComplaint = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { description, location, status, type } = req.body;
+
+    const complaint = await Complaint.findById(id);
+    if (!complaint) {
+      return res.status(404).json({
+        success: false,
+        message: "Complaint not found",
+      });
+    }
+
+    // ✅ Restrict access
+    if (req.user.accountType === "Citizen" && complaint.citizenId.toString() !== req.user.id) {
+      return res.status(403).json({
+        success: false,
+        message: "Unauthorized access to this complaint",
+      });
+    }
+
+    // ✅ Citizens can update only description, location, and optionally upload new images
+    if (req.user.accountType === "Citizen") {
+      if (description) complaint.description = description;
+      if (location) complaint.location = location;
+
+      // ✅ Handle optional image uploads
+      if (req.files && req.files.length > 0) {
+        const uploadPromises = req.files.map((file) => uploadOnCloudinary(file.path));
+        const uploadResults = await Promise.all(uploadPromises);
+        const imageUrls = uploadResults.map((r) => r.secure_url);
+        complaint.images.push(...imageUrls);
+      }
+    } else {
+      // ✅ Staff/Admin can modify everything
+      if (description) complaint.description = description;
+      if (location) complaint.location = location;
+      if (status) complaint.status = status;
+      if (type) complaint.type = type;
+    }
+
+    await complaint.save();
+
+    return res.status(200).json({
+      success: true,
+      message: "Complaint updated successfully",
+      complaint,
+    });
+  } catch (error) {
+    console.error("Error updating complaint:", error);
+    return res.status(500).json({
+      success: false,
+      message: "Server error while updating complaint",
+      error: error.message,
+    });
+  }
+};
+

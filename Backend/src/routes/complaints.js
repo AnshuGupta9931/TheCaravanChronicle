@@ -3,7 +3,9 @@ import {
   createComplaint,
   getAllComplaints,
   getMyComplaints,
-  updateComplaintStatus 
+  updateComplaintStatus,
+  getComplaintById,
+  updateComplaint,
 } from "../controllers/complaint.js";
 import { auth, isCitizen, isStaff } from "../middlewares/auth.js";
 import { upload } from "../middlewares/multer.js";
@@ -29,5 +31,8 @@ router.post(
   upload.array("images", 5),
   createComplaint
 );
+
+router.get('/:id', auth, getComplaintById);
+router.put('/:id', auth, upload.array("images", 5), updateComplaint);
 
 export default router;
