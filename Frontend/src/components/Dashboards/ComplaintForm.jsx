@@ -1,90 +1,130 @@
-import React, { useState } from "react";
-import { createComplaint } from "../../services/operations/compAPI.jsx";
-import { toast } from "react-hot-toast";
+import React, { useState } from 'react';
+import { createComplaint } from '../../services/operations/compAPI.jsx'; // adjust path as needed
 
-const ComplaintForm = ({ onSubmitted }) => {
-  const [form, setForm] = useState({
-    type: "",
-    description: "",
-    location: "",
+const ComplaintForm = () => {
+  const [formData, setFormData] = useState({
+    description: '',
+    category: 'Roads & Pathways',
+    location: '',
+    images: null,
   });
-  const [images, setImages] = useState([]);
+
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  const categories = [
+    "Roads & Pathways",
+    "Water Issues (Leaks, Drainage)",
+    "Electricity & Lighting",
+    "Garbage & Sanitation",
+    "Other"
+  ];
+
+  const handleChange = (e) => {
+    const { name, value, files } = e.target;
+    setFormData({
+      ...formData,
+      [name]: files ? files[0] : value,
+    });
+  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-
-    const formData = new FormData();
-    formData.append("type", form.type);
-    formData.append("description", form.description);
-    formData.append("location", form.location);
-
-    // ✅ Must match backend: `images`
-    images.forEach((file) => formData.append("images", file));
+    setIsSubmitting(true);
 
     try {
-      const res = await createComplaint(formData);
-      toast.success(res?.data?.message || "Complaint submitted successfully!");
-      setForm({ type: "", description: "", location: "" });
-      setImages([]);
+      // 🧩 Create FormData for backend
+      const formDataToSend = new FormData();
+      formDataToSend.append("type", formData.category);
+      formDataToSend.append("description", formData.description);
+      formDataToSend.append("location", formData.location);
+      if (formData.images) {
+        formDataToSend.append("images", formData.images); // same fieldname as multer
+      } // ✅ must match multer field name
 
-      if (onSubmitted) onSubmitted();
+      // 🧠 Call backend
+      const response = await createComplaint(formDataToSend);
+      console.log("Complaint created:", response.data);
+      alert("Complaint submitted successfully!");
+
+      if (response?.data?.success) {
+        alert("Complaint submitted successfully!");
+        setFormData({
+          description: '',
+          category: 'Roads & Pathways',
+          location: '',
+          images: null,
+        });
+      } else {
+        alert("Failed to submit complaint.");
+      }
     } catch (err) {
-      console.error("Complaint submit error:", err);
-      toast.error(err.response?.data?.message || "Error submitting complaint");
+      console.error("Complaint submission failed:", err);
+      alert("Something went wrong.");
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
   return (
-    <form
-      onSubmit={handleSubmit}
-      className="p-6 bg-white rounded-2xl shadow-lg space-y-4 max-w-lg mx-auto"
-    >
-      <h2 className="text-xl font-semibold text-gray-800">Submit a Complaint</h2>
+    <form onSubmit={handleSubmit} className="p-6 bg-white rounded-xl shadow-lg space-y-6">
+      <h2 className="text-2xl font-bold text-circus-red">Submit a New Complaint</h2>
 
-      <select
-        className="w-full border p-2 rounded"
-        value={form.type}
-        onChange={(e) => setForm({ ...form, type: e.target.value })}
-        required
-      >
-        <option value="">Select Complaint Type</option>
-        <option value="Road Damage">Road Damage</option>
-        <option value="Water Leakage">Water Leakage</option>
-        <option value="Garbage">Garbage</option>
-      </select>
+      <div>
+        <label className="block text-sm font-semibold text-gray-700 mb-1">Category</label>
+        <select
+          name="category"
+          value={formData.category}
+          onChange={handleChange}
+          className="w-full border border-gray-300 rounded-lg p-3"
+        >
+          {categories.map(cat => (
+            <option key={cat} value={cat}>{cat}</option>
+          ))}
+        </select>
+      </div>
 
-      <textarea
-        placeholder="Description"
-        className="w-full border p-2 rounded"
-        rows={4}
-        value={form.description}
-        onChange={(e) => setForm({ ...form, description: e.target.value })}
-        required
-      />
+      <div>
+        <label className="block text-sm font-semibold text-gray-700 mb-1">Description</label>
+        <textarea
+          name="description"
+          rows="4"
+          value={formData.description}
+          onChange={handleChange}
+          className="w-full border border-gray-300 rounded-lg p-3"
+          required
+        />
+      </div>
 
-      <input
-        type="text"
-        placeholder="Location"
-        className="w-full border p-2 rounded"
-        value={form.location}
-        onChange={(e) => setForm({ ...form, location: e.target.value })}
-        required
-      />
+      <div>
+        <label className="block text-sm font-semibold text-gray-700 mb-1">Location</label>
+        <input
+          type="text"
+          name="location"
+          value={formData.location}
+          onChange={handleChange}
+          className="w-full border border-gray-300 rounded-lg p-3"
+          required
+        />
+      </div>
 
-      <input
-        type="file"
-        multiple
-        accept="image/*"
-        onChange={(e) => setImages([...e.target.files])}
-        className="w-full border p-2 rounded"
-        required
-      />
+      <div>
+        <label className="block text-sm font-semibold text-gray-700 mb-1">Upload Image</label>
+        <input
+          type="file"
+          name="images"
+          onChange={handleChange}
+          accept="image/*"
+          className="w-full text-gray-600"
+        />
+      </div>
 
       <button
         type="submit"
-        className="bg-blue-600 text-white py-2 px-4 rounded-lg hover:bg-blue-700 transition"
+        disabled={isSubmitting}
+        className={`w-full py-3 text-white font-semibold rounded-lg shadow-md transition 
+                    ${isSubmitting ? 'bg-gray-400' : 'bg-red-600 hover:bg-red-700'}`}
       >
-        Submit Complaint
+        {isSubmitting ? "Submitting..." : "Submit Complaint"}
       </button>
     </form>
   );

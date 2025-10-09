@@ -1,4 +1,4 @@
-// Frontend/src/components/common/Loading.jsx
+// can be used.. not needed now
 
 import React from 'react';
 

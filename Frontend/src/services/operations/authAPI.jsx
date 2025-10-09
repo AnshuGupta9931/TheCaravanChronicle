@@ -55,6 +55,10 @@ export function sendOtp(email, navigate){
 // import { SIGNUP_API } from "../apis";
 // import { setLoading } from "../slices/authSlice";
 
+// NOTE: Assuming you have a constant for the Staff account type, 
+// for example, ACCOUNT_TYPE.STAFF. I'll use the string "Staff" for now, 
+// but you should replace it with your constant.
+
 export function signUp(
     accountType,
     firstName,
@@ -63,54 +67,62 @@ export function signUp(
     password,
     confirmPassword,
     otp,
+    staffId,        // staff ID from form
+    staffCategory,  // ✅ ADD THIS PARAMETER
     navigate
-  ) {
+) {
     return async (dispatch) => {
-      const toastId = toast.loading("Loading...");
-      dispatch(setLoading(true));
-  
-      try {
-        const response = await apiConnector("POST", SIGNUP_API, {
-          accountType,
-          firstName,
-          lastName,
-          email,
-          password,
-          confirmPassword,
-          otp,
-        });
-  
-        console.log("SIGNUP API RESPONSE............", response);
-  
-        if (!response.data.success) {
-          throw new Error(response.data.message);
+        const toastId = toast.loading("Loading...");
+        dispatch(setLoading(true));
+
+        try {
+            // ✅ Build clean payload with correct values
+            const payload = {
+                accountType,
+                firstName,
+                lastName,
+                email,
+                password,
+                confirmPassword,
+                otp,
+                ...(staffId && { staffId }),
+                ...(staffCategory && { staffCategory }), // ✅ Add this line
+            };
+
+            console.log("SIGNUP PAYLOAD SENT:", payload); // Debug log
+
+            const response = await apiConnector("POST", SIGNUP_API, payload);
+
+            console.log("SIGNUP API RESPONSE............", response);
+
+            if (!response.data.success) {
+                throw new Error(response.data.message);
+            }
+
+            if (accountType === "Staff") {
+                toast.success("Staff Account Created! Awaiting Admin Approval.");
+            } else {
+                toast.success("Signup Successful");
+            }
+
+            if (typeof navigate === "function") {
+                navigate("/login");
+            }
+
+        } catch (error) {
+            console.log("SIGNUP API ERROR............", error);
+            toast.error(error?.response?.data?.message || "Signup Failed");
+
+            if (typeof navigate === "function") {
+                navigate("/signup");
+            }
         }
-  
-        toast.success("Signup Successful");
-  
-        // ✅ Safe call to navigate
-        if (typeof navigate === "function") {
-          navigate("/login");
-        } else {
-          console.warn("Navigate is not a function");
-        }
-        navigate("/login");
-      } catch (error) {
-        console.log("SIGNUP API ERROR............", error);
-        toast.error(error?.response?.data?.message || "Signup Failed");
-  
-        if (typeof navigate === "function") {
-          navigate("/signup");
-        } else {
-          console.warn("Navigate is not a function");
-        }
-        navigate("/signup")
-      }
-  
-      dispatch(setLoading(false));
-      toast.dismiss(toastId);
+
+        dispatch(setLoading(false));
+        toast.dismiss(toastId);
     };
-}  
+}
+
 
 export function login(email, password, navigate) {
   return async (dispatch) => {
@@ -120,65 +132,71 @@ export function login(email, password, navigate) {
     try {
       const response = await apiConnector("POST", LOGIN_API, { email, password });
 
-      console.log("LOGIN API RESPONSE:", response);
+      console.log("🔐 LOGIN API RESPONSE:", response);
 
       if (!response.data.success) {
         throw new Error(response.data.message);
       }
-      console.log("Aman1");
 
       toast.success("Login Successful");
 
-      console.log("Aman2");
-
+      // ✅ Extract user + token from server
       const serverUser = response.data.user;
       const token = response.data.token;
 
-      console.log("Aman3");
+      if (!serverUser || !token) {
+        throw new Error("Invalid server response — user or token missing");
+      }
 
-      const userImage = serverUser?.image
-        ? serverUser.image
-        : `https://api.dicebear.com/5.x/initials/svg?seed=${serverUser.firstName} ${serverUser.lastName}`;
-
-      console.log("Aman4");
-
-      // Normalize user object
-      const flattenedUser = {
+      // ✅ Normalize / flatten user object
+      const normalizedUser = {
         _id: serverUser._id,
         email: serverUser.email,
-        role: serverUser.accountType?.toLowerCase(), // ✅ normalize
         firstName: serverUser.firstName || "",
         lastName: serverUser.lastName || "",
-        image: userImage,
+        contactNumber: serverUser.contactNumber || "",
+        role: serverUser.accountType?.toLowerCase(),
+        accountType: serverUser.accountType, // ✅ ensure always present
+        image:
+          serverUser.image ||
+          `https://api.dicebear.com/5.x/initials/svg?seed=${serverUser.firstName} ${serverUser.lastName}`,
       };
 
+      console.log("✅ Normalized User:", normalizedUser);
 
-      console.log("Aman5");
-
-      // Save in Redux
+      // ✅ Save to Redux
       dispatch(setToken(token));
-      dispatch(setUser(flattenedUser));
+      dispatch(setUser(normalizedUser));
 
-      // Save in localStorage
+      // ✅ Save to localStorage (for persistence)
       localStorage.setItem("token", token);
-      localStorage.setItem("user", JSON.stringify(flattenedUser));
-
-      console.log("Aman6");
+      localStorage.setItem("user", JSON.stringify(normalizedUser));
 
       // ✅ Role-based navigation
-     if (flattenedUser.role === "citizen") navigate("/dashboard/create-complaint");
-else if (flattenedUser.role === "staff") navigate("/dashboard/all-complaints");
-else if (flattenedUser.role === "admin") navigate("/dashboard/all-complaints");
-else navigate("/dashboard");
-    } catch (error) {
-      console.error("LOGIN API ERROR:", error);
-      toast.error(error.response?.data?.message || "Login failed");
-    }
+      const role = normalizedUser.accountType?.toLowerCase();
 
-    dispatch(setLoading(false));
-    toast.dismiss(toastId);
+      if (role === "citizen") {
+        console.log("🌍 Redirecting to Citizen Dashboard");
+        navigate("/dashboard");
+      } else if (role === "staff") {
+        console.log("🧰 Redirecting to Staff Dashboard");
+        navigate("/staff");
+      } else if (role === "admin") {
+        console.log("🛠 Redirecting to Admin Dashboard");
+        navigate("/admin");
+      } else {
+        navigate("/");
+      }
+    } catch (error) {
+      console.error("❌ LOGIN API ERROR:", error);
+      toast.error(error.response?.data?.message || "Login failed. Please try again.");
+    } finally {
+      dispatch(setLoading(false));
+      toast.dismiss(toastId);
+    }
   };
 }
+
 
   
 export function logout(navigate) {

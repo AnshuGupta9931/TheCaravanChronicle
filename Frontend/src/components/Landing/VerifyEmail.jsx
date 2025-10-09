@@ -1,64 +1,74 @@
 import React, { useState, useEffect } from "react";
-import { useLocation } from "react-router-dom";
+import { useNavigate, Link } from "react-router-dom";
+import { useDispatch, useSelector } from "react-redux";
 import OtpInput from "react-otp-input";
+import { RxCountdownTimer } from "react-icons/rx";
+import { sendOtp, signUp } from "../../services/operations/authAPI.jsx";
 import StyledWrapper from "./FormStyles";
 
-//
-import { Link } from "react-router-dom";
-import { useDispatch, useSelector } from "react-redux";
-import { sendOtp, signUp } from "../../services/operations/authAPI.jsx";
-import { useNavigate } from "react-router-dom";
-import { RxCountdownTimer } from "react-icons/rx";
-
 export const VerifyEmail = () => {
-  // const location = useLocation();
-  // const email = location.state?.email || "your email"; // Get email from ResetPassword
-
   const [otp, setOtp] = useState("");
   const { signupData, loading } = useSelector((state) => state.auth);
-
-  // const handleVerify = () => {
-  //   alert(`Verifying OTP: ${otp} for ${email}`);
-  // };
 
   const dispatch = useDispatch();
   const navigate = useNavigate();
 
   useEffect(() => {
-      // Only allow access of this route when user has filled the signup form
-      if (!signupData) {
-        navigate("/signup");
-      }
-      // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, []);
-  
+    // ✅ Redirect to signup if no data
+    if (!signupData) {
+      navigate("/signup");
+    }
+  }, [signupData, navigate]);
 
   const handleVerifyAndSignup = (e) => {
-    e.preventDefault(); 
+    e.preventDefault();
 
+    if (!signupData) {
+      console.error("Signup data missing.");
+      navigate("/signup");
+      return;
+    }
+
+    // ✅ Destructure everything including staffCategory
     const {
+      accountType,
+      firstName,
+      lastName,
+      email,
+      password,
+      confirmPassword,
+      staffId,
+      staffCategory, // <-- Fixed
+    } = signupData;
+
+    console.log("VERIFYING SIGNUP PAYLOAD:", {
+      accountType,
+      firstName,
+      lastName,
+      email,
+      password,
+      confirmPassword,
+      otp,
+      staffId,
+      staffCategory,
+    });
+
+    // ✅ Dispatch signup API call
+    dispatch(
+      signUp(
         accountType,
         firstName,
         lastName,
         email,
         password,
         confirmPassword,
-    } = signupData;
-      
-    dispatch(
-        signUp(
-            accountType,
-            firstName,
-            lastName,
-            email,
-            password,
-            confirmPassword,
-            otp,
-            navigate
-        )
+        otp,
+        staffId,
+        staffCategory,
+        navigate
+      )
     );
-  }
-
+  };
 
   return (
     <StyledWrapper>
@@ -66,18 +76,18 @@ export const VerifyEmail = () => {
         <div className="card2">
           <div className="form">
             <p id="heading">Verify Email</p>
-            <p className="message">A verification code has been sent to you. Enter the code below.</p>
+            <p className="message">
+              A verification code has been sent to your email. Enter the code below.
+            </p>
 
-            {/* OTP Input Fields */}
             <form onSubmit={handleVerifyAndSignup}>
-
               <div className="otp-container">
                 <OtpInput
                   value={otp}
                   onChange={setOtp}
                   numInputs={6}
-                  isInputNum={true}
-                  shouldAutoFocus={true}
+                  isInputNum
+                  shouldAutoFocus
                   renderInput={(props) => <input {...props} />}
                   inputStyle={{
                     width: "50px",
@@ -95,32 +105,31 @@ export const VerifyEmail = () => {
                 />
               </div>
 
-              {/* Verify Button */}
-              <div className="btn">
-                <button type="submit" className="button1">
-                  Verify Email
+              <div className="btn mt-4">
+                <button type="submit" className="button1" disabled={loading}>
+                  {loading ? "Verifying..." : "Verify Email"}
                 </button>
               </div>
-
             </form>
 
-            {/* Back to Signup */}
-            <p className="signin">
+            <p className="signin mt-4">
               ← <Link to="/signup">Back to Signup</Link>
             </p>
 
-            {/* Resend Button */}
             <button
-                className="flex items-center text-blue-100 gap-x-2"
-                onClick={() => dispatch(sendOtp(signupData.email, navigate))}
+              className="flex items-center text-blue-100 gap-x-2 mt-2"
+              onClick={() =>
+                signupData?.email && dispatch(sendOtp(signupData.email, navigate))
+              }
+              disabled={loading}
             >
-                <RxCountdownTimer />
-                Resend it
+              <RxCountdownTimer /> Resend it
             </button>
-
           </div>
         </div>
       </div>
     </StyledWrapper>
   );
 };
+
+export default VerifyEmail;

@@ -1,54 +1,67 @@
-// Frontend/src/components/common/ComplaintCard.jsx
-
 import React from 'react';
-
-// Utility component to render status badge with colors
-const StatusBadge = ({ status }) => {
-    let colorClasses = 'bg-gray-100 text-gray-800'; // Default
-    if (status === 'RESOLVED') colorClasses = 'bg-green-100 text-green-700';
-    else if (status === 'IN PROGRESS') colorClasses = 'bg-yellow-100 text-yellow-700';
-    else if (status === 'OPEN') colorClasses = 'bg-red-100 text-red-700';
-
-    return (
-        <span className={`px-3 py-1 text-xs font-semibold rounded-full ${colorClasses}`}>
-            {status}
-        </span>
-    );
-};
+import { useNavigate } from 'react-router-dom';
+import StatusPill from './StatusPill.jsx';
 
 const ComplaintCard = ({ complaint }) => {
-    return (
-        <div className="bg-white p-6 rounded-xl shadow-lg border border-gray-200 hover:shadow-xl transition duration-300">
-            <div className="flex justify-between items-start mb-3">
-                <h3 className="text-xl font-bold text-gray-800 capitalize">
-                    {complaint.type || "General Issue"}
-                </h3>
-                <StatusBadge status={complaint.status} />
-            </div>
+  const navigate = useNavigate();
 
-            <p className="text-gray-600 mb-4 line-clamp-2">
-                {complaint.description || "No description provided."}
-            </p>
+  // ✅ Get the first uploaded image (if any)
+  const imageUrl = complaint?.images?.[0] || null;
 
-            <div className="flex justify-between items-center text-sm text-gray-500 border-t pt-3">
-                <div>
-                    <span className="font-medium">Complaint ID:</span> 
-                    <span className="ml-1">{complaint._id}</span>
-                </div>
-                <div>
-                    <span className="font-medium">Date:</span> 
-                    <span className="ml-1">
-                        {new Date(complaint.createdAt).toLocaleDateString()}
-                    </span>
-                </div>
-            </div>
-            
-            {/* Optional: Add a button to view details if needed */}
-            {/* <div className="mt-4">
-                <button className="text-blue-600 hover:text-blue-800 font-semibold text-sm">View Details →</button>
-            </div> */}
-        </div>
-    );
+  return (
+    <div className="flex items-center bg-white p-4 rounded-xl shadow-md hover:shadow-lg transition duration-300 cursor-pointer border border-gray-100">
+      
+      {/* ✅ Complaint Image or Placeholder */}
+      <div className="w-16 h-16 rounded-lg mr-4 flex-shrink-0 overflow-hidden flex items-center justify-center bg-gray-100">
+        {imageUrl ? (
+          <img
+            src={imageUrl}
+            alt={complaint.type || "Complaint image"}
+            className="w-full h-full object-cover"
+          />
+        ) : (
+          <svg
+            className="w-10 h-10 text-gray-400"
+            fill="currentColor"
+            viewBox="0 0 24 24"
+          >
+            <path d="M21 3h-3V1h-2v2h-4V1h-2v2H3c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h18c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zM8 17h8v-2H8v2zm0-4h8v-2H8v2zm0-4h8V7H8v2z" />
+          </svg>
+        )}
+      </div>
+
+      {/* ✅ Complaint Details */}
+      <div className="flex-grow">
+        <h4 className="text-lg font-semibold text-circus-dark">
+          {complaint.type || "Untitled Complaint"}
+        </h4>
+        <p className="text-sm text-gray-500 mt-1">
+          Submitted:{" "}
+          {complaint.createdAt
+            ? new Date(complaint.createdAt).toLocaleDateString("en-IN", {
+                day: "2-digit",
+                month: "short",
+                year: "numeric",
+              })
+            : "N/A"}
+        </p>
+        <p className="text-sm text-gray-600 mt-1 line-clamp-2">
+          {complaint.description || "No description provided."}
+        </p>
+      </div>
+
+      {/* ✅ Status + Details Link */}
+      <div className="ml-auto flex flex-col items-end">
+        <StatusPill status={complaint.status} />
+        <button
+          onClick={() => navigate(`/dashboard/complaint/${complaint._id}`)}
+          className="text-sm text-circus-red hover:text-circus-gold mt-2 font-medium"
+        >
+          View Details &rarr;
+        </button>
+      </div>
+    </div>
+  );
 };
 
 export default ComplaintCard;

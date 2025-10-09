@@ -1,4 +1,4 @@
-// Frontend/src/components/common/ComplaintTable.jsx
+//Not required for now
 
 import React from 'react';
 

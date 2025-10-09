@@ -15,6 +15,11 @@ const COMPLAINT_ENDENTS = {
 };
 
 // PROFILE ENDPOINTS
-export const profileEndpoints = {
-  UPDATE_PROFILE_API: BASE_URL + "/profile/updateProfile",
+export const PROFILE_API = {
+  GET_PROFILE: BASE_URL + "/profile/get-profile",
+  UPDATE: BASE_URL + "/profile/update-profile",
 };
+
+// export const PROFILE_API = {
+//   GET_DETAILS: "/api/v1/profile/get-details", // optional, if you have one
+// };

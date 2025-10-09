@@ -1,41 +1,19 @@
-import React, { useEffect, useState } from "react";
-import ComplaintForm from "../components/Dashboards/ComplaintForm";
-import ComplaintList from "../components/Dashboards/ComplaintList";
-import { getMyComplaints, getAllComplaints } from "../services/operations/compAPI.jsx";
+import React from "react";
+import { Outlet } from "react-router-dom";
 import { useSelector } from "react-redux";
 
 const Dashboard = () => {
-    const { token } = useSelector((state) => state.auth);
-    const { user } = useSelector((state) => state.profile);
-  
-    console.log("Dashboard check -> token:", token, "user:", user); // { role: "citizen" | "staff" | "admin" }
-  const [complaints, setComplaints] = useState([]);
-
-  const fetchComplaints = async () => {
-    const res =
-      user.role === "citizen" ? await getMyComplaints() : await getAllComplaints();
-    setComplaints(res.data.data);
-  };
-
-  useEffect(() => {
-    fetchComplaints();
-  }, []);
+  const { user } = useSelector((state) => state.profile);
 
   return (
-    <div className="max-w-5xl mx-auto p-6 space-y-6">
-      <h1 className="text-3xl font-semibold">
-        {user.role === "citizen"
-          ? "My Complaints"
-          : user.role === "staff"
-          ? "Staff Complaint Dashboard"
-          : "Admin Complaint Dashboard"}
+    <div className="min-h-screen">
+      {/* Optional: a sidebar or header common to all dashboard pages */}
+      <h1 className="text-2xl font-bold text-center mt-4">
+        Welcome, {user?.firstName || "User"}!
       </h1>
 
-      {user.role === "citizen" && (
-        <ComplaintForm onSubmitted={fetchComplaints} />
-      )}
-
-      <ComplaintList complaints={complaints} userRole={user.role} refresh={fetchComplaints} />
+      {/* 👇 This is critical */}
+      <Outlet />
     </div>
   );
 };

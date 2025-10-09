@@ -1,5 +1,6 @@
 export const ACCOUNT_TYPE = {
-    USER: "User",
-    ADMIN: "Admin",
-    STAFF: "Staff"
-}
+  // Use "CITIZEN" instead of "USER" to match the backend schema:
+  CITIZEN: "Citizen", 
+  ADMIN: "Admin",
+  STAFF: "Staff",
+};

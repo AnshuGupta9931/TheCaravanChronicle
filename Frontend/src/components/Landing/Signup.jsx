@@ -6,22 +6,25 @@ import { setSignupData } from "../../slices/authSlice.jsx";
 import { ACCOUNT_TYPE } from "../../utils/constants.jsx";
 import { toast } from "react-hot-toast";
 import { Tab } from "../common/Tab.jsx";
-import signuppage from "../../assets/images/signuppage.png"; 
+import signuppage from "../../assets/images/signuppage.png";
 
 export const Signup = () => {
   const navigate = useNavigate();
   const dispatch = useDispatch();
 
-  const [accountType, setAccountType] = useState(ACCOUNT_TYPE.STUDENT);
+  const [accountType, setAccountType] = useState(ACCOUNT_TYPE.CITIZEN);
+  
   const [formData, setFormData] = useState({
     firstName: "",
     lastName: "",
     email: "",
     password: "",
     confirmPassword: "",
+    staffId: "",
+    staffCategory: "", // ✅ Add this line
   });
 
-  const { firstName, lastName, email, password, confirmPassword } = formData;
+  const { firstName, lastName, email, password, confirmPassword, staffId, staffCategory } = formData;
 
   const handleOnChange = (e) => {
     setFormData((prev) => ({
@@ -38,19 +41,37 @@ export const Signup = () => {
       return;
     }
 
+    // Validation for staff-specific fields
+    if (accountType === ACCOUNT_TYPE.STAFF) {
+      if (!staffId) {
+        toast.error("Staff ID is required for Staff accounts");
+        return;
+      }
+      if (!staffCategory) {
+        toast.error("Please select a staff category");
+        return;
+      }
+    }
+
     const signupData = {
       ...formData,
       accountType,
     };
+
+    // Remove staff fields if not staff account
+    if (accountType !== ACCOUNT_TYPE.STAFF) {
+      delete signupData.staffId;
+      delete signupData.staffCategory;
+    }
 
     dispatch(setSignupData(signupData));
     dispatch(sendOtp(formData.email, navigate));
   };
 
   const tabData = [
-    { id: 1, tabName: "User", type: ACCOUNT_TYPE.USER },
+    { id: 1, tabName: "Citizen", type: ACCOUNT_TYPE.CITIZEN },
     { id: 2, tabName: "Admin", type: ACCOUNT_TYPE.ADMIN },
-    { id: 3, tabName: "Staff", type: ACCOUNT_TYPE.STAFF }
+    { id: 3, tabName: "Staff", type: ACCOUNT_TYPE.STAFF },
   ];
 
   return (
@@ -80,9 +101,7 @@ export const Signup = () => {
 
           {/* Google Signup */}
           <button
-            onClick={() =>
-              (window.location.href = "#")
-            }
+            onClick={() => (window.location.href = "#")}
             className="w-full flex items-center justify-center gap-2 py-3 px-5 bg-white border border-gray-300 text-gray-700 rounded-xl font-medium shadow hover:shadow-md mb-6"
           >
             <img
@@ -120,6 +139,7 @@ export const Signup = () => {
                 required
               />
             </div>
+
             <input
               type="email"
               name="email"
@@ -129,6 +149,37 @@ export const Signup = () => {
               onChange={handleOnChange}
               required
             />
+
+            {/* Staff Fields */}
+            {accountType === ACCOUNT_TYPE.STAFF && (
+              <>
+                <input
+                  type="text"
+                  name="staffId"
+                  placeholder="Staff ID"
+                  className="w-full px-4 py-3 border rounded-xl text-sm text-gray-800 focus:outline-none focus:ring-2 focus:ring-green-600 shadow hover:shadow-xl"
+                  value={staffId}
+                  onChange={handleOnChange}
+                  required
+                />
+
+                {/* ✅ Staff Category Dropdown */}
+                <select
+                  name="staffCategory"
+                  value={staffCategory}
+                  onChange={handleOnChange}
+                  required
+                  className="w-full px-4 py-3 border rounded-xl text-sm text-gray-800 focus:outline-none focus:ring-2 focus:ring-green-600 shadow hover:shadow-xl bg-white"
+                >
+                  <option value="">Select Staff Category</option>
+                  <option value="Sweeper">Sweeper</option>
+                  <option value="Plumber">Plumber</option>
+                  <option value="Carpenter">Carpenter</option>
+                  <option value="Others">Others</option>
+                </select>
+              </>
+            )}
+
             <input
               type="password"
               name="password"
@@ -138,6 +189,7 @@ export const Signup = () => {
               onChange={handleOnChange}
               required
             />
+
             <input
               type="password"
               name="confirmPassword"
