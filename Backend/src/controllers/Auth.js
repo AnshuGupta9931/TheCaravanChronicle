@@ -1,19 +1,21 @@
-const bcrypt = require("bcryptjs");
-const jwt = require("jsonwebtoken");
-const User = require("../models/User");
-import Profile from "../models/Profile.js";
-import OTP from "../models/OTP.js";
+import bcrypt from "bcryptjs";
+import jwt from "jsonwebtoken";
+import { User } from "../models/User.js";
+import { Profile } from "../models/Profile.js";
+import { StaffProfile } from "../models/StaffProfile.js";
+import { OTP } from "../models/OTP.js";
 import otpGenerator from "otp-generator";
-import mailSender from "../utils/mailSender.js";
-import { otpTemplate } from "../mail/templates/otpTemplate.js"; // optional custom template
-import { passwordUpdated } from "../mail/templates/passwordUpdated.js"; // optional email template
+import { mailSender } from "../../utils/mailSender.js";
+import { otpTemplate } from "../../mail_templates/otpTemplate.js";
+import { passwordUpdated } from "../../mail_templates/PasswordUpdate.js";
 
-// Send OTP to new user's email for registration
+// =======================================================================
+// SEND OTP
+// =======================================================================
 export const sendOTP = async (req, res) => {
   try {
     const { email } = req.body;
 
-    // 1️⃣ Validate email input
     if (!email) {
       return res.status(400).json({
         success: false,
@@ -21,7 +23,6 @@ export const sendOTP = async (req, res) => {
       });
     }
 
-    // 2️⃣ Check if user already exists
     const existingUser = await User.findOne({ email });
     if (existingUser) {
       return res.status(409).json({
@@ -30,9 +31,7 @@ export const sendOTP = async (req, res) => {
       });
     }
 
-    // 3️⃣ Generate 6-digit numeric OTP
-    let otp;
-    let existingOTP;
+    let otp, existingOTP;
     do {
       otp = otpGenerator.generate(6, {
         upperCaseAlphabets: false,
@@ -42,21 +41,18 @@ export const sendOTP = async (req, res) => {
       existingOTP = await OTP.findOne({ otp });
     } while (existingOTP);
 
-    // 4️⃣ Save OTP to DB (linked with email)
-    const otpEntry = await OTP.create({ email, otp });
+    await OTP.create({ email, otp });
 
-    // 5️⃣ Send OTP via Email
     const emailContent = otpTemplate
       ? otpTemplate(otp)
       : `<p>Your Circus City verification code is <b>${otp}</b>. It will expire in 5 minutes.</p>`;
 
     await mailSender(email, "Your Circus City OTP Code", emailContent);
 
-    // 6️⃣ Respond
     return res.status(200).json({
       success: true,
       message: "OTP sent successfully. Please check your email.",
-      otp, // ⚠️ only include in dev mode — remove in production
+      otp: process.env.NODE_ENV === "development" ? otp : undefined, // show OTP only in dev
     });
   } catch (error) {
     console.error("Error sending OTP:", error);
@@ -67,7 +63,9 @@ export const sendOTP = async (req, res) => {
   }
 };
 
-// Signup Controller
+// =======================================================================
+// SIGNUP
+// =======================================================================
 export const signup = async (req, res) => {
   try {
     const {
@@ -79,9 +77,13 @@ export const signup = async (req, res) => {
       accountType, // Citizen | Staff | Admin
       contactNumber,
       otp,
+      staffId,         // staff-only
+      staffCategory,   // staff-only
     } = req.body;
 
-    // 1. Validate required fields
+    console.log("SIGNUP BODY RECEIVED:", req.body);
+
+    // 🧩 Basic validations
     if (!firstName || !lastName || !email || !password || !confirmPassword || !otp) {
       return res.status(400).json({
         success: false,
@@ -89,7 +91,13 @@ export const signup = async (req, res) => {
       });
     }
 
-    // 2. Match password & confirmPassword
+    if (accountType === "Staff" && (!staffId || !staffCategory)) {
+      return res.status(400).json({
+        success: false,
+        message: "Staff ID and Staff Category are required for staff accounts.",
+      });
+    }
+
     if (password !== confirmPassword) {
       return res.status(400).json({
         success: false,
@@ -97,7 +105,7 @@ export const signup = async (req, res) => {
       });
     }
 
-    // 3. Check if user already exists
+    // 🧩 Check for existing user
     const existingUser = await User.findOne({ email });
     if (existingUser) {
       return res.status(409).json({
@@ -106,26 +114,21 @@ export const signup = async (req, res) => {
       });
     }
 
-    // 4. Validate OTP
+    // 🧩 Verify OTP
     const recentOtp = await OTP.findOne({ email }).sort({ createdAt: -1 });
-    if (!recentOtp) {
+    if (!recentOtp || otp !== recentOtp.otp) {
       return res.status(400).json({
         success: false,
-        message: "OTP not found or expired. Please request again.",
+        message: "Invalid or expired OTP. Please try again.",
       });
     }
 
-    if (otp !== recentOtp.otp) {
-      return res.status(400).json({
-        success: false,
-        message: "Invalid OTP. Please try again.",
-      });
-    }
+    await OTP.findByIdAndDelete(recentOtp._id);
 
-    // 5. Hash password
+    // 🧩 Hash password
     const hashedPassword = await bcrypt.hash(password, 10);
 
-    // 6. Create empty profile (can be updated later)
+    // 🧩 Create Profile
     const profileDetails = await Profile.create({
       gender: null,
       dateOfBirth: null,
@@ -133,26 +136,55 @@ export const signup = async (req, res) => {
       contactNumber: contactNumber || null,
     });
 
-    // 7. Create new user entry
+    // 🧩 Default approval for Citizen/Admin, pending for Staff
+    const isApprovedStatus = accountType === "Staff" ? false : true;
+
+    // ✅ 1️⃣ Create user first
     const user = await User.create({
       firstName,
       lastName,
       email,
-      contactNumber,
       password: hashedPassword,
-      role: accountType || "Citizen", // default role = Citizen
+      accountType: accountType || "Citizen",
+      isApproved: isApprovedStatus,
       additionalDetails: profileDetails._id,
       image: `https://api.dicebear.com/5.x/initials/svg?seed=${firstName} ${lastName}`,
     });
 
-    // 8. Send success response
+    // ✅ 2️⃣ If Staff, create linked StaffProfile
+    if (accountType === "Staff") {
+      const staffProfile = await StaffProfile.create({
+        user: user._id,       // 👈 REQUIRED FIELD
+        staffId,
+        staffCategory,
+      });
+
+      user.staffProfile = staffProfile._id;
+      await user.save();
+    }
+
+    // ✅ 3️⃣ Response
+    const successMessage =
+      accountType === "Staff"
+        ? "Staff account created successfully, awaiting Admin approval."
+        : "User registered successfully.";
+
     return res.status(201).json({
       success: true,
-      message: "User registered successfully.",
+      message: successMessage,
       user,
     });
   } catch (err) {
-    console.error("Signup Error:", err.message);
+    console.error("Signup Error:", err);
+
+    if (err.code === 11000) {
+      const duplicateKey = Object.keys(err.keyValue)[0];
+      return res.status(409).json({
+        success: false,
+        message: `${duplicateKey === "email" ? "Email" : "Staff ID"} already exists.`,
+      });
+    }
+
     return res.status(500).json({
       success: false,
       message: "Server error during signup.",
@@ -160,11 +192,14 @@ export const signup = async (req, res) => {
   }
 };
 
-exports.login = async (req, res) => {
+
+// =======================================================================
+// LOGIN
+// =======================================================================
+export const login = async (req, res) => {
   try {
     const { email, password } = req.body;
 
-    // 1. Validate input
     if (!email || !password) {
       return res.status(400).json({
         success: false,
@@ -172,8 +207,8 @@ exports.login = async (req, res) => {
       });
     }
 
-    // 2. Check if user exists
-    const user = await User.findOne({ email });
+    // 🔍 Find user and include password for comparison
+    const user = await User.findOne({ email }).select("+password");
     if (!user) {
       return res.status(404).json({
         success: false,
@@ -181,114 +216,107 @@ exports.login = async (req, res) => {
       });
     }
 
-    // 3. Match password
+    // 🔑 Compare passwords
     const isMatch = await bcrypt.compare(password, user.password);
     if (!isMatch) {
       return res.status(401).json({
         success: false,
-        message: "Invalid password",
+        message: "Invalid credentials.",
       });
     }
 
-    // 4. Prepare JWT payload
+    // 🚫 Check staff approval
+    if (user.accountType === "Staff" && !user.isApproved) {
+      return res.status(401).json({
+        success: false,
+        message: "Access denied. Your Staff account is pending administrative approval.",
+      });
+    }
+
+    // 🧾 Token payload
     const payload = {
       id: user._id,
       email: user.email,
-      role: user.role, // Citizen | Staff | Admin
+      accountType: user.accountType,
     };
 
-    // 5. Sign JWT
+    // 🔐 Create JWT token
     const token = jwt.sign(payload, process.env.JWT_SECRET, {
       expiresIn: "2h",
     });
 
-    // 6. Set cookie
+    // 🔒 Cookie options
     const options = {
       httpOnly: true,
-      secure: process.env.NODE_ENV === "production", // only https in prod
-      expires: new Date(Date.now() + 3 * 24 * 60 * 60 * 1000),
+      secure: process.env.NODE_ENV === "production",
+      expires: new Date(Date.now() + 2 * 60 * 60 * 1000), // 2 hours
     };
 
-    // Hide password in response
+    // 🧼 Remove password before sending response
     user.password = undefined;
 
+    // 🍪 Send token via cookie + return user info
     res.cookie("token", token, options).status(200).json({
       success: true,
       message: "Login successful",
       token,
-      user,
+      user: {
+        _id: user._id,
+        firstName: user.firstName,
+        lastName: user.lastName,
+        email: user.email,
+        accountType: user.accountType, // ✅ important
+        image: user.image,
+        additionalDetails: user.additionalDetails,
+      },
     });
   } catch (err) {
-    console.error("Login Error:", err.message);
-    res.status(500).json({
+    console.error("Login Error:", err);
+    return res.status(500).json({
       success: false,
       message: "Server error during login",
     });
   }
 };
 
+
+// =======================================================================
+// CHANGE PASSWORD
+// =======================================================================
 export const changePassword = async (req, res) => {
   try {
-    // 1️⃣ Get current user from token (set in authMiddleware)
     const user = await User.findById(req.user.id);
-    if (!user) {
-      return res.status(404).json({
-        success: false,
-        message: "User not found.",
-      });
-    }
+    if (!user)
+      return res.status(404).json({ success: false, message: "User not found." });
 
-    // 2️⃣ Extract passwords from request body
     const { oldPassword, newPassword, confirmPassword } = req.body;
-    if (!oldPassword || !newPassword || !confirmPassword) {
-      return res.status(400).json({
-        success: false,
-        message: "All password fields are required.",
-      });
-    }
+    if (!oldPassword || !newPassword || !confirmPassword)
+      return res.status(400).json({ success: false, message: "All password fields are required." });
 
-    // 3️⃣ Validate old password
     const isMatch = await bcrypt.compare(oldPassword, user.password);
-    if (!isMatch) {
-      return res.status(401).json({
-        success: false,
-        message: "Incorrect old password.",
-      });
-    }
+    if (!isMatch)
+      return res.status(401).json({ success: false, message: "Incorrect old password." });
 
-    // 4️⃣ Confirm new passwords match
-    if (newPassword !== confirmPassword) {
-      return res.status(400).json({
-        success: false,
-        message: "New password and confirmation do not match.",
-      });
-    }
+    if (newPassword !== confirmPassword)
+      return res.status(400).json({ success: false, message: "New password and confirmation do not match." });
 
-    // 5️⃣ Hash and update the password
     const hashedPassword = await bcrypt.hash(newPassword, 10);
     user.password = hashedPassword;
     await user.save();
 
-    // 6️⃣ Send password change confirmation email
     try {
-      const emailResponse = await mailSender(
+      await mailSender(
         user.email,
         "Your Circus City account password has been updated",
         passwordUpdated
           ? passwordUpdated(user.email)
           : `<p>Hello ${user.name}, your password was successfully updated.</p>`
       );
-      console.log("Password change email sent:", emailResponse.response);
     } catch (emailError) {
       console.error("Error sending password change email:", emailError);
-      // Continue even if email fails — password was updated
     }
 
-    // ✅ 7️⃣ Final success response
-    return res.status(200).json({
-      success: true,
-      message: "Password changed successfully.",
-    });
+    return res.status(200).json({ success: true, message: "Password changed successfully." });
   } catch (err) {
     console.error("Error while changing password:", err);
     return res.status(500).json({
