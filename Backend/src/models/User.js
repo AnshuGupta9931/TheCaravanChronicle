@@ -35,7 +35,7 @@ const userSchema = new mongoose.Schema(
 
     accountType: {
       type: String,
-      enum: ["Citizen", "Staff", "Admin"],
+      enum: ["Citizen", "Staff", "StaffManager","Admin"],
       required: true,
       default: "Citizen",
     },

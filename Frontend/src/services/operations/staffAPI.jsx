@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 // src/services/operations/staffAPI.js
 import { apiConnector } from "../apiconnector.jsx";
 
@@ -75,4 +76,32 @@ export const deleteStaffAccount = async (userId) => {
     console.error("❌ Error deleting staff:", error);
     throw error;
   }
+=======
+import axios from "axios";
+const BASE_URL = "http://localhost:8000/api/v1/staff";
+
+export const getStaffDashboardAPI = async (token) => {
+  const { data } = await axios.get(`${BASE_URL}/dashboard`, {
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  return data.dashboard;
+};
+
+export const getStaffComplaintsAPI = async (token, status) => {
+  const { data } = await axios.get(`${BASE_URL}/complaints?status=${status}`, {
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  return data.complaints;
+};
+
+export const updateComplaintStatusAPI = async (token, complaintId, status) => {
+  const { data } = await axios.put(
+    `${BASE_URL}/complaints/${complaintId}/status`,
+    { status },
+    {
+      headers: { Authorization: `Bearer ${token}` },
+    }
+  );
+  return data.complaint;
+>>>>>>> 3169489 (Staff feature ready)
 };

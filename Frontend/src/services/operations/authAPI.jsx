@@ -174,7 +174,7 @@ export function login(email, password, navigate) {
 
       // ✅ Role-based navigation
       const role = normalizedUser.accountType?.toLowerCase();
-
+      console.log(role);
       if (role === "citizen") {
         console.log("🌍 Redirecting to Citizen Dashboard");
         navigate("/dashboard");

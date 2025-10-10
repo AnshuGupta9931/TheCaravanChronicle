@@ -67,7 +67,15 @@ export const isCitizen = async (req, res, next) => {
     });
   }
 };
-
+export const authorizeRoles = (...allowedRoles) => {
+  return async (req, res, next) => {
+    const userRole = req.user.accountType;
+    if (!allowedRoles.includes(userRole)) {
+      return res.status(403).json({ message: "Access denied: insufficient permissions" });
+    }
+    next();
+  };
+};
 export const isStaff = async (req, res, next) => {
   try {
       if (req.user.accountType !== "Staff" && req.user.accountType !== "Admin") {

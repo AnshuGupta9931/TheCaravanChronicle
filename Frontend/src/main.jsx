@@ -1,3 +1,4 @@
+// main.jsx
 import { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
 import React from "react";
@@ -21,12 +22,23 @@ import { VerifyEmail } from "./components/Landing/VerifyEmail.jsx";
 import AboutUs from "./components/Landing/AboutUs.jsx";
 import ContactUs from "./components/Landing/ContactUs.jsx";
 
+<<<<<<< HEAD
+=======
+// -------------------- Dashboard Layout --------------------
+>>>>>>> 3169489 (Staff feature ready)
 import PrivateRoute from "./components/core/Auth/PrivateRoute.jsx";
 import Dashboard from "./pages/Dashboard.jsx";
+import Profile from "./pages/Profile.jsx";
+
+// -------------------- Citizen Pages --------------------
 import CitizenDashboard from "./pages/CitizenDashboard.jsx";
 import ComplaintForm from "./components/Dashboards/ComplaintForm.jsx";
 import MyComplaintsView from "./components/Dashboards/MyComplaintsView.jsx";
+// -------------------- Staff Pages --------------------
+import StaffDashboard from "./pages/StaffDashboard.jsx";
+import StaffComplaints from "./pages/StaffComplaints.jsx";
 import ComplaintDetails from "./pages/ComplaintDetails.jsx";
+<<<<<<< HEAD
 import Profile from "./pages/Profile.jsx";
 
 import AdminDashboard from "./pages/Admin/AdminDashboard.jsx";
@@ -36,6 +48,15 @@ import StaffRequests from "./pages/Admin/StaffRequests.jsx";
 import AdminComplaintDetails from "./pages/Admin/AdminComplaintDetails.jsx";
 
 import ComplaintHeatmap from "./pages/ComplaintHeatmap.jsx";
+=======
+
+// -------------------- Staff Manager Pages --------------------
+// import StaffManagerDashboard from "./pages/StaffManagerDashboard.jsx";
+// import AssignComplaints from "./components/StaffManager/AssignComplaints.jsx";
+
+// -------------------- Admin Pages --------------------
+//import AdminDashboard from "./pages/AdminDashboard.jsx";
+>>>>>>> 3169489 (Staff feature ready)
 
 const router = createBrowserRouter(
   createRoutesFromElements(
@@ -49,6 +70,10 @@ const router = createBrowserRouter(
         <Route path="contact" element={<ContactUs />} />
       </Route>
 
+<<<<<<< HEAD
+=======
+      {/* ------------------ 2. CITIZEN DASHBOARD ------------------ */}
+>>>>>>> 3169489 (Staff feature ready)
       <Route
         path="/dashboard"
         element={
@@ -91,12 +116,28 @@ const router = createBrowserRouter(
         />
       </Route>
 
+<<<<<<< HEAD
+=======
+      {/* ------------------ 3. STAFF DASHBOARD ------------------ */}
+>>>>>>> 3169489 (Staff feature ready)
       <Route
         path="/staff"
         element={
           <PrivateRoute element={<Dashboard />} allowedRoles={["Staff"]} />
         }
       >
+<<<<<<< HEAD
+=======
+        <Route index element={<StaffDashboard />} />
+        <Route
+          path="complaints"
+          element={<PrivateRoute element={<StaffComplaints />} allowedRoles={["Staff"]} />}
+        />
+        <Route
+          path="complaint/:id"
+          element={<PrivateRoute element={<ComplaintDetails />} allowedRoles={["Staff"]} />}
+        />
+>>>>>>> 3169489 (Staff feature ready)
         <Route
           path="profile"
           element={
@@ -105,13 +146,37 @@ const router = createBrowserRouter(
         />
       </Route>
 
+<<<<<<< HEAD
+=======
+      {/* ------------------ 4. STAFF MANAGER DASHBOARD ------------------ */}
+      <Route
+        path="/manager"
+        element={<PrivateRoute element={<Dashboard />} allowedRoles={["StaffManager"]} />}
+      >
+        <Route index element={<StaffDashboard />} />
+        {/* <Route
+          path="assign"
+          element={<PrivateRoute element={<AssignComplaints />} allowedRoles={["StaffManager"]} />}
+        /> */}
+        <Route
+          path="profile"
+          element={<PrivateRoute element={<Profile />} allowedRoles={["StaffManager"]} />}
+        />
+      </Route>
+
+      {/* ------------------ 5. ADMIN DASHBOARD ------------------ */}
+>>>>>>> 3169489 (Staff feature ready)
       <Route
         path="/admin"
         element={
           <PrivateRoute element={<Dashboard />} allowedRoles={["Admin"]} />
         }
       >
+<<<<<<< HEAD
         <Route index element={<AdminDashboard />} />
+=======
+        
+>>>>>>> 3169489 (Staff feature ready)
         <Route
           path="profile"
           element={
@@ -141,6 +206,7 @@ const router = createBrowserRouter(
         />
       </Route>
 
+<<<<<<< HEAD
       <Route
         path="/heatmap"
         element={
@@ -151,6 +217,9 @@ const router = createBrowserRouter(
         }
       />
 
+=======
+      {/* ------------------ 6. 404 FALLBACK ------------------ */}
+>>>>>>> 3169489 (Staff feature ready)
       <Route
         path="*"
         element={

@@ -1,8 +1,8 @@
+// models/StaffProfile.js
 import mongoose from "mongoose";
 
 const staffProfileSchema = new mongoose.Schema(
   {
-    // Reference to the User
     user: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "User",
@@ -10,7 +10,6 @@ const staffProfileSchema = new mongoose.Schema(
       unique: true,
     },
 
-    // Unique Staff ID
     staffId: {
       type: String,
       required: true,
@@ -18,32 +17,33 @@ const staffProfileSchema = new mongoose.Schema(
       trim: true,
     },
 
-    // Staff category
     staffCategory: {
       type: String,
       enum: ["Sweeper", "Plumber", "Carpenter", "Electrician", "Others"],
       default: "Others",
       required: true,
     },
+
+    // 🆕 Added role
+    role: {
+      type: String,
+      enum: ["Staff", "Manager"],
+      default: "Staff",
+      required: true,
+    },
   },
   { timestamps: true }
 );
 
-// ✅ Ensure indexes for unique constraints
-staffProfileSchema.index({ user: 1 }, { unique: true });
-staffProfileSchema.index({ staffId: 1 }, { unique: true });
-
-// ✅ Safety check — only allow linking to Staff accounts
+// ✅ Validation to ensure link consistency
 staffProfileSchema.pre("save", async function (next) {
   const User = mongoose.model("User");
   const linkedUser = await User.findById(this.user);
 
-  if (!linkedUser) {
-    return next(new Error("Linked user not found."));
-  }
+  if (!linkedUser) return next(new Error("Linked user not found."));
 
-  if (linkedUser.accountType !== "Staff") {
-    return next(new Error("StaffProfile can only be linked to a Staff user."));
+  if (!["Staff", "StaffManager"].includes(linkedUser.accountType)) {
+    return next(new Error("Only staff or managers can have a StaffProfile."));
   }
 
   next();
