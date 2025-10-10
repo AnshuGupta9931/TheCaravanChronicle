@@ -33,7 +33,7 @@ const ComplaintList = ({ complaints = [] }) => {
               {/* Complaint Info */}
               <div>
                 <h4 className="text-lg font-semibold text-gray-800 mb-1">
-                  {complaint.title || "Untitled Complaint"}
+                  {complaint.type || "Untitled Complaint"}
                 </h4>
                 <p className="text-sm text-gray-500 mb-2">
                   {new Date(complaint.createdAt).toLocaleDateString("en-IN", {

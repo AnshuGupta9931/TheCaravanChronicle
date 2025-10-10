@@ -13,7 +13,6 @@ import { Toaster } from "react-hot-toast";
 import rootReducer from "./reducers/index.jsx";
 import "./index.css";
 
-// -------------------- Landing Pages --------------------
 import Layout from "./components/Landing/Layout.jsx";
 import { Home } from "./components/Landing/Home.jsx";
 import { Login } from "./components/Landing/Login.jsx";
@@ -22,33 +21,25 @@ import { VerifyEmail } from "./components/Landing/VerifyEmail.jsx";
 import AboutUs from "./components/Landing/AboutUs.jsx";
 import ContactUs from "./components/Landing/ContactUs.jsx";
 
-// -------------------- Dashboard & Protected --------------------
 import PrivateRoute from "./components/core/Auth/PrivateRoute.jsx";
 import Dashboard from "./pages/Dashboard.jsx";
 import CitizenDashboard from "./pages/CitizenDashboard.jsx";
 import ComplaintForm from "./components/Dashboards/ComplaintForm.jsx";
 import MyComplaintsView from "./components/Dashboards/MyComplaintsView.jsx";
 import ComplaintDetails from "./pages/ComplaintDetails.jsx";
-import Profile from "./pages/Profile.jsx"; // ✅ Common profile page
+import Profile from "./pages/Profile.jsx";
 
 import AdminDashboard from "./pages/Admin/AdminDashboard.jsx";
 import AdminProfile from "./pages/Admin/AdminProfile.jsx";
 import AllComplaints from "./pages/Admin/AllComplaints.jsx";
-import StaffRequests from "./pages/Admin/StaffRequests";
-import AdminComplaintDetails from "./pages/Admin/AdminComplaintDetails.jsx"
+import StaffRequests from "./pages/Admin/StaffRequests.jsx";
+import AdminComplaintDetails from "./pages/Admin/AdminComplaintDetails.jsx";
 
+import ComplaintHeatmap from "./pages/ComplaintHeatmap.jsx";
 
-// -------------------- Staff & Admin Dashboards --------------------
-// import StaffDashboard from "./pages/StaffDashboard.jsx";
-// import AdminDashboard from "./pages/AdminDashboard.jsx";
-
-// -----------------------------------------------------------------------
-// ROUTER DEFINITION
-// -----------------------------------------------------------------------
 const router = createBrowserRouter(
   createRoutesFromElements(
     <>
-      {/* ------------------ 1. PUBLIC ROUTES ------------------ */}
       <Route path="/" element={<Layout />}>
         <Route index element={<Home />} />
         <Route path="login" element={<Login />} />
@@ -58,7 +49,6 @@ const router = createBrowserRouter(
         <Route path="contact" element={<ContactUs />} />
       </Route>
 
-      {/* ------------------ 2. CITIZEN DASHBOARD (PROTECTED) ------------------ */}
       <Route
         path="/dashboard"
         element={
@@ -66,7 +56,6 @@ const router = createBrowserRouter(
         }
       >
         <Route index element={<CitizenDashboard />} />
-
         <Route
           path="create-complaint"
           element={
@@ -90,7 +79,7 @@ const router = createBrowserRouter(
           element={
             <PrivateRoute
               element={<ComplaintDetails />}
-              allowedRoles={["Citizen","Admin","Staff"]}
+              allowedRoles={["Citizen", "Admin", "Staff"]}
             />
           }
         />
@@ -102,14 +91,12 @@ const router = createBrowserRouter(
         />
       </Route>
 
-      {/* ------------------ 3. STAFF DASHBOARD (PROTECTED) ------------------ */}
       <Route
         path="/staff"
         element={
           <PrivateRoute element={<Dashboard />} allowedRoles={["Staff"]} />
         }
       >
-        {/* <Route index element={<StaffDashboard />} /> */}
         <Route
           path="profile"
           element={
@@ -118,7 +105,6 @@ const router = createBrowserRouter(
         />
       </Route>
 
-      {/* ------------------ 4. ADMIN DASHBOARD (PROTECTED) ------------------ */}
       <Route
         path="/admin"
         element={
@@ -135,10 +121,7 @@ const router = createBrowserRouter(
         <Route
           path="all-complaints"
           element={
-            <PrivateRoute
-              element={<AllComplaints />}
-              allowedRoles={["Admin"]}
-            />
+            <PrivateRoute element={<AllComplaints />} allowedRoles={["Admin"]} />
           }
         />
         <Route
@@ -153,15 +136,21 @@ const router = createBrowserRouter(
         <Route
           path="requests"
           element={
-            <PrivateRoute
-              element={<StaffRequests />}
-              allowedRoles={["Admin"]}
-            />
+            <PrivateRoute element={<StaffRequests />} allowedRoles={["Admin"]} />
           }
         />
       </Route>
 
-      {/* ------------------ 5. 404 FALLBACK ------------------ */}
+      <Route
+        path="/heatmap"
+        element={
+          <PrivateRoute
+            element={<ComplaintHeatmap />}
+            allowedRoles={["Admin", "Staff", "Citizen"]}
+          />
+        }
+      />
+
       <Route
         path="*"
         element={
@@ -174,21 +163,14 @@ const router = createBrowserRouter(
   )
 );
 
-// -----------------------------------------------------------------------
-// REDUX STORE SETUP
-// -----------------------------------------------------------------------
 const store = configureStore({
   reducer: rootReducer,
 });
 
-// -----------------------------------------------------------------------
-// ROOT RENDER
-// -----------------------------------------------------------------------
 createRoot(document.getElementById("root")).render(
   <StrictMode>
     <Provider store={store}>
       <Toaster position="top-center" />
-      {/* 🌈 GLOBAL BACKGROUND THEME */}
       <div className="min-h-screen bg-gradient-to-r from-green-400 via-emerald-500 to-teal-500">
         <RouterProvider router={router} />
       </div>
