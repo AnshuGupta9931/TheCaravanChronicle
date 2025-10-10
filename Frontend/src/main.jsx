@@ -31,6 +31,13 @@ import MyComplaintsView from "./components/Dashboards/MyComplaintsView.jsx";
 import ComplaintDetails from "./pages/ComplaintDetails.jsx";
 import Profile from "./pages/Profile.jsx"; // ✅ Common profile page
 
+import AdminDashboard from "./pages/Admin/AdminDashboard.jsx";
+import AdminProfile from "./pages/Admin/AdminProfile.jsx";
+import AllComplaints from "./pages/Admin/AllComplaints.jsx";
+import StaffRequests from "./pages/Admin/StaffRequests";
+import AdminComplaintDetails from "./pages/Admin/AdminComplaintDetails.jsx"
+
+
 // -------------------- Staff & Admin Dashboards --------------------
 // import StaffDashboard from "./pages/StaffDashboard.jsx";
 // import AdminDashboard from "./pages/AdminDashboard.jsx";
@@ -54,49 +61,103 @@ const router = createBrowserRouter(
       {/* ------------------ 2. CITIZEN DASHBOARD (PROTECTED) ------------------ */}
       <Route
         path="/dashboard"
-        element={<PrivateRoute element={<Dashboard />} allowedRoles={["Citizen"]} />}
+        element={
+          <PrivateRoute element={<Dashboard />} allowedRoles={["Citizen"]} />
+        }
       >
         <Route index element={<CitizenDashboard />} />
 
         <Route
           path="create-complaint"
-          element={<PrivateRoute element={<ComplaintForm />} allowedRoles={["Citizen"]} />}
+          element={
+            <PrivateRoute
+              element={<ComplaintForm />}
+              allowedRoles={["Citizen"]}
+            />
+          }
         />
         <Route
           path="my-complaints"
-          element={<PrivateRoute element={<MyComplaintsView />} allowedRoles={["Citizen"]} />}
+          element={
+            <PrivateRoute
+              element={<MyComplaintsView />}
+              allowedRoles={["Citizen"]}
+            />
+          }
         />
         <Route
           path="complaint/:id"
-          element={<PrivateRoute element={<ComplaintDetails />} allowedRoles={["Citizen"]} />}
+          element={
+            <PrivateRoute
+              element={<ComplaintDetails />}
+              allowedRoles={["Citizen","Admin","Staff"]}
+            />
+          }
         />
         <Route
           path="profile"
-          element={<PrivateRoute element={<Profile />} allowedRoles={["Citizen"]} />}
+          element={
+            <PrivateRoute element={<Profile />} allowedRoles={["Citizen"]} />
+          }
         />
       </Route>
 
       {/* ------------------ 3. STAFF DASHBOARD (PROTECTED) ------------------ */}
       <Route
         path="/staff"
-        element={<PrivateRoute element={<Dashboard />} allowedRoles={["Staff"]} />}
+        element={
+          <PrivateRoute element={<Dashboard />} allowedRoles={["Staff"]} />
+        }
       >
         {/* <Route index element={<StaffDashboard />} /> */}
         <Route
           path="profile"
-          element={<PrivateRoute element={<Profile />} allowedRoles={["Staff"]} />}
+          element={
+            <PrivateRoute element={<Profile />} allowedRoles={["Staff"]} />
+          }
         />
       </Route>
 
       {/* ------------------ 4. ADMIN DASHBOARD (PROTECTED) ------------------ */}
       <Route
         path="/admin"
-        element={<PrivateRoute element={<Dashboard />} allowedRoles={["Admin"]} />}
+        element={
+          <PrivateRoute element={<Dashboard />} allowedRoles={["Admin"]} />
+        }
       >
-        {/* <Route index element={<AdminDashboard />} /> */}
+        <Route index element={<AdminDashboard />} />
         <Route
           path="profile"
-          element={<PrivateRoute element={<Profile />} allowedRoles={["Admin"]} />}
+          element={
+            <PrivateRoute element={<AdminProfile />} allowedRoles={["Admin"]} />
+          }
+        />
+        <Route
+          path="all-complaints"
+          element={
+            <PrivateRoute
+              element={<AllComplaints />}
+              allowedRoles={["Admin"]}
+            />
+          }
+        />
+        <Route
+          path="complaint/:id"
+          element={
+            <PrivateRoute
+              element={<AdminComplaintDetails />}
+              allowedRoles={["Admin"]}
+            />
+          }
+        />
+        <Route
+          path="requests"
+          element={
+            <PrivateRoute
+              element={<StaffRequests />}
+              allowedRoles={["Admin"]}
+            />
+          }
         />
       </Route>
 

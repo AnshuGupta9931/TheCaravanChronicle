@@ -11,6 +11,7 @@ import reportRoutes from "./routes/reports.js";
 import complaintRoutes from "./routes/complaints.js";
 import userRoutes from "./routes/users.js";
 import profileRoutes from "./routes/ProfileRoutes.js";
+import adminRoutes from "./routes/adminRoutes.js";
 
 // ------------------------------
 // ✅ Setup __dirname for ES Modules
@@ -44,6 +45,7 @@ app.use("/api/v1/reports", reportRoutes);
 app.use("/api/v1/complaints", complaintRoutes);
 app.use("/api/v1/auth", userRoutes);
 app.use("/api/v1/profile", profileRoutes);
+app.use("/api/v1/admin",adminRoutes);
 
 // ------------------------------
 // ✅ Serve Uploaded Files (Images)

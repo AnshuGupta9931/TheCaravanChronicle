@@ -84,3 +84,20 @@ export const isStaff = async (req, res, next) => {
       });
   }
 };
+
+export const isAdmin = async (req, res, next) => {
+  try {
+      if (req.user.accountType !== "Admin") {
+          return res.status(403).json({
+              success: false,
+              message: "Access Denied: This route is for Admins only.",
+          });
+      }
+      next();
+  } catch (error) {
+      return res.status(500).json({
+          success: false,
+          message: "User role could not be verified.",
+      });
+  }
+};

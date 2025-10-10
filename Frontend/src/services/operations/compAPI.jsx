@@ -73,3 +73,9 @@ export const updateComplaintStatus = async (id, status) => {
     { status }
   );
 };
+
+export const getComplaintStats = async () => {
+  const response = await apiConnector("GET", `${BASE_URL}/admin/complaint-stats`);
+  return response.data.data;
+};
+

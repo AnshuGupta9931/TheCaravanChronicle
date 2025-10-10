@@ -1,4 +1,4 @@
-import { Complaint } from "../models/complaint.js";
+import { Complaint } from "../models/Complaint.js";
 import { uploadOnCloudinary } from "../../utils/cloudinary.js";
 import { User } from "../models/User.js";
 
@@ -147,41 +147,85 @@ export const updateComplaintStatus = async (req, res) => {
 };
 
 // ✅ Get a single complaint by ID
+// export const getComplaintById = async (req, res) => {
+//   try {
+//     const { id } = req.params;
+    
+//     const complainti = await Complaint.findById(id);
+//     console.log("ani", complainti.toJSON());
+
+
+//     const complaint = await Complaint.findById(id);
+
+//     if (!complaint) {
+//       return res.status(404).json({
+//         success: false,
+//         message: 'Complaint not found',
+//       });
+//     }
+
+//     // ✅ Optionally restrict citizens to only their own complaints
+//     if (req.user.accountType === 'Citizen' && complaint.citizenId.toString() !== req.user.id) {
+//       return res.status(403).json({
+//         success: false,
+//         message: 'Unauthorized access to this complaint',
+//       });
+//     }
+
+//     return res.status(200).json({
+//       success: true,
+//       message: 'Complaint retrieved successfully',
+//       complaint,
+//     });
+//   } catch (error) {
+//     console.error('Error fetching complaint by ID:', error);
+//     return res.status(500).json({
+//       success: false,
+//       message: 'Server error while fetching complaint',
+//       error: error.message,
+//     });
+//   }
+// };
+
+
 export const getComplaintById = async (req, res) => {
   try {
     const { id } = req.params;
-    
-    const complainti = await Complaint.findById(id);
-    console.log("ani", complainti.toJSON());
 
-
-    const complaint = await Complaint.findById(id);
+    // ✅ Populate citizenId with name + email only
+    const complaint = await Complaint.findById(id).populate(
+      "citizenId",
+      "firstName lastName email"
+    );
 
     if (!complaint) {
       return res.status(404).json({
         success: false,
-        message: 'Complaint not found',
+        message: "Complaint not found",
       });
     }
 
-    // ✅ Optionally restrict citizens to only their own complaints
-    if (req.user.accountType === 'Citizen' && complaint.citizenId.toString() !== req.user.id) {
+    // ✅ Restrict citizens from accessing others' complaints
+    if (
+      req.user.accountType === "Citizen" &&
+      complaint.citizenId._id.toString() !== req.user.id
+    ) {
       return res.status(403).json({
         success: false,
-        message: 'Unauthorized access to this complaint',
+        message: "Unauthorized access to this complaint",
       });
     }
 
     return res.status(200).json({
       success: true,
-      message: 'Complaint retrieved successfully',
+      message: "Complaint retrieved successfully",
       complaint,
     });
   } catch (error) {
-    console.error('Error fetching complaint by ID:', error);
+    console.error("Error fetching complaint by ID:", error);
     return res.status(500).json({
       success: false,
-      message: 'Server error while fetching complaint',
+      message: "Server error while fetching complaint",
       error: error.message,
     });
   }

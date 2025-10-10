@@ -69,8 +69,8 @@ complaintSchema.pre('save', function(next) {
 // ✅ Virtual field for Overdue status
 complaintSchema.virtual("isOverdue").get(function () {
   // Overdue if still OPEN or IN PROGRESS and older than 3 days
-  // const threeDays = 3 * 24 * 60 * 60 * 1000; // ms in 3 days
-  const threeDays = 5000; // ms in 3 days
+  const threeDays = 3 * 24 * 60 * 60 * 1000; // ms in 3 days
+  // const threeDays = 5000; // ms in 3 days
   const age = Date.now() - this.createdAt.getTime();
   return age > threeDays && this.status !== "RESOLVED";
 });
@@ -82,4 +82,5 @@ complaintSchema.set("toObject", { virtuals: true });
 // complaintSchema.index({ citizenId: 1 });
 // complaintSchema.index({ location: '2dsphere' });
 
-export const Complaint = mongoose.model("Complaint", complaintSchema);
+export const Complaint =
+  mongoose.models.Complaint || mongoose.model("Complaint", complaintSchema);

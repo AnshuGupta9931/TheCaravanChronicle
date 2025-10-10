@@ -22,7 +22,9 @@ const PrivateRoute = ({ element, allowedRoles = [] }) => {
   }
 
   const userRole = user?.accountType?.toLowerCase();
+  console.log("User role is ", userRole);
   const normalizedAllowedRoles = allowedRoles.map((r) => r.toLowerCase());
+  console.log(normalizedAllowedRoles);
 
   if (allowedRoles.length > 0 && !normalizedAllowedRoles.includes(userRole)) {
     console.warn("🚫 Unauthorized role:", userRole);
