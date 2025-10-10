@@ -67,10 +67,10 @@ export const otpTemplate = (otp) => {
 	<body>
 		<div class="container">
 			<a href="https://meetingapp.com"><img class="logo" src="https://i.ibb.co/7Xyj3PC/logo.png" alt="MeetingApp Logo"></a>
-			<div class="message">OTP Verification Email from MeetingApp</div>
+			<div class="message">OTP Verification Email from GrievEase</div>
 			<div class="body">
 				<p>Hey there,</p>
-				<p>Welcome to MeetingApp! We're excited to have you on board. To get started with your new account, we just need you to verify your identity with the OTP (One-Time Password) below:</p>
+				<p>Welcome to GrievEase</! We're excited to have you on board. To get started with your new account, we just need you to verify your identity with the OTP (One-Time Password) below:</p>
 				<h2 class="highlight">${otp}</h2>
 				<p>This OTP will be valid for the next 5 minutes, so be sure to use it soon. If you didn’t request this, please feel free to ignore this email.</p>
 				<p>Once you verify your account, you'll be able to join meetings, manage schedules, and enjoy all the amazing features of MeetingApp.</p>

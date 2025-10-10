@@ -1,55 +1,52 @@
-import { Complaint } from "../models/complaint.js";
+import { Complaint } from "../models/Complaint.js";
 import { uploadOnCloudinary } from "../../utils/cloudinary.js";
 import { User } from "../models/User.js";
+import { mailSender } from "../../utils/mailSender.js";
 
-// Placeholder for cleanup function (you need to implement this)
 const deleteFromCloudinary = async (imageUrls) => {
-    // Logic to delete files from Cloudinary using their secure_url or public_id
-    console.log("Cleanup function called for:", imageUrls);
-    return true; // Assume success for now
+  console.log("Cleanup called for:", imageUrls);
+  return true; 
 };
 
 export const createComplaint = async (req, res) => {
   const citizenId = req.user._id;
-  const { type, description, location } = req.body;
-  const files = req.files;
+  const { type, description, latitude, longitude, address } = req.body;
+  const files = req.files || [];
   let imageUrls = [];
 
   try {
-    if (!type || !description || !location || !files || files.length === 0) {
+    // Validate input
+    if (!type || !description || !latitude || !longitude) {
       return res.status(400).json({
         success: false,
-        message: "All fields and at least one image are required.",
+        message: "Type, description, latitude, and longitude are required.",
       });
     }
 
-    // Upload each image to Cloudinary
-    const uploadPromises = files.map((file) => uploadOnCloudinary(file.path));
-    const uploadResults = await Promise.all(uploadPromises);
-
-    if (uploadResults.some((result) => !result)) {
-      return res.status(500).json({
-        success: false,
-        message: "Image upload failed. Please try again.",
-      });
+    // Upload images to Cloudinary
+    if (files.length > 0) {
+      const uploadPromises = files.map((file) => uploadOnCloudinary(file.path));
+      const uploadResults = await Promise.all(uploadPromises);
+      imageUrls = uploadResults.map((r) => r.secure_url);
     }
 
-    imageUrls = uploadResults.map((r) => r.secure_url);
-
+    // Create new complaint with GeoJSON location
     const newComplaint = await Complaint.create({
       citizenId,
       type,
       description,
-      location, // simple string, not geo point
+      location: {
+        type: "Point",
+        coordinates: [parseFloat(longitude), parseFloat(latitude)],
+        address,
+      },
       images: imageUrls,
       status: "OPEN",
     });
 
-    await User.findByIdAndUpdate(
-      citizenId,
-      { $push: { complaints: newComplaint._id } },
-      { new: true }
-    );
+    await User.findByIdAndUpdate(citizenId, {
+      $push: { complaints: newComplaint._id },
+    });
 
     return res.status(201).json({
       success: true,
@@ -65,88 +62,49 @@ export const createComplaint = async (req, res) => {
   }
 };
 
-
 export const getAllComplaints = async (req, res) => {
-    try {
-        const complaints = await Complaint.find({}).populate("citizenId", "name email").sort({ createdAt: -1 });
+  try {
+    const complaints = await Complaint.find({})
+      .populate("citizenId", "firstName lastName email")
+      .sort({ createdAt: -1 });
 
-        return res.status(200).json({
-            success: true,
-            message: "Complaints retrieved successfully.",
-            count: complaints.length,
-            data: complaints,
-        });
-    } catch (error) {
-        console.error("Error while fetching complaints:", error);
-        return res.status(500).json({
-            success: false,
-            message: "Server error while fetching complaints.",
-        });
-    }
+    return res.status(200).json({
+      success: true,
+      message: "All complaints retrieved successfully.",
+      count: complaints.length,
+      data: complaints,
+    });
+  } catch (error) {
+    console.error("Error fetching complaints:", error);
+    return res.status(500).json({
+      success: false,
+      message: "Failed to fetch complaints.",
+    });
+  }
 };
 
 export const getMyComplaints = async (req, res) => {
-    try {
-        const complaints = await Complaint.find({ citizenId: req.user._id }).sort({ createdAt: -1 });
+  try {
+    const complaints = await Complaint.find({ citizenId: req.user._id }).sort({
+      createdAt: -1,
+    });
 
-
-        return res.status(200).json({
-            success: true,
-            message: "Your complaints retrieved successfully.",
-            count: complaints.length,
-            complaints,
-        });
-    } catch (error) {
-        console.error('Error fetching user complaints:', error);
-        return res.status(500).json({ 
-            success: false,
-            message: 'Failed to fetch your complaints.' 
-        });
-    }
+    return res.status(200).json({
+      success: true,
+      message: "Your complaints retrieved successfully.",
+      count: complaints.length,
+      complaints,
+    });
+  } catch (error) {
+    console.error("Error fetching user complaints:", error);
+    return res.status(500).json({
+      success: false,
+      message: "Failed to fetch your complaints.",
+    });
+  }
 };
 
-export const updateComplaintStatus = async (req, res) => {
-    try {
-        // FIX: Correctly extract 'id' from req.params
-        const { id: complaintId } = req.params; 
-        const { status } = req.body;
 
-        const allowedStatuses = ["OPEN", "IN PROGRESS", "RESOLVED"];
-        if (!allowedStatuses.includes(status)) {
-            return res.status(400).json({ 
-                success: false,
-                message: 'Invalid status. Must be one of: OPEN, IN PROGRESS, RESOLVED.' 
-            });
-        }
-
-        const updatedComplaint = await Complaint.findByIdAndUpdate(
-            complaintId,
-            { status },
-            { new: true, runValidators: true }
-        );
-
-        if (!updatedComplaint) {
-            return res.status(404).json({ 
-                success: false,
-                message: 'Complaint not found.' 
-            });
-        }
-
-        return res.status(200).json({
-            success: true,
-            message: 'Complaint status updated successfully.',
-            data: updatedComplaint
-        });
-    } catch (error) {
-        console.error('Error updating complaint status:', error);
-        return res.status(500).json({ 
-            success: false,
-            message: 'Failed to update complaint status due to a server error.' 
-        });
-    }
-};
-
-// ✅ Get a single complaint by ID
 export const getComplaintById = async (req, res) => {
   try {
     const { id } = req.params;
@@ -187,61 +145,147 @@ export const getComplaintById = async (req, res) => {
   }
 };
 
-// ✅ Update complaint details (citizen can edit description, location)
 export const updateComplaint = async (req, res) => {
   try {
-    const { id } = req.params;
-    const { description, location, status, type } = req.body;
+    const complaintId = req.params.id;
+    const { type, description, latitude, longitude, address } = req.body;
+    const files = req.files || [];
+    let imageUrls = [];
 
-    const complaint = await Complaint.findById(id);
+    const complaint = await Complaint.findById(complaintId);
     if (!complaint) {
       return res.status(404).json({
         success: false,
-        message: "Complaint not found",
+        message: "Complaint not found.",
       });
     }
 
-    // ✅ Restrict access
-    if (req.user.accountType === "Citizen" && complaint.citizenId.toString() !== req.user.id) {
-      return res.status(403).json({
-        success: false,
-        message: "Unauthorized access to this complaint",
-      });
+    if (files.length > 0) {
+      const uploadPromises = files.map((file) => uploadOnCloudinary(file.path));
+      const uploadResults = await Promise.all(uploadPromises);
+      imageUrls = uploadResults.map((r) => r.secure_url);
+      complaint.images.push(...imageUrls);
     }
 
-    // ✅ Citizens can update only description, location, and optionally upload new images
-    if (req.user.accountType === "Citizen") {
-      if (description) complaint.description = description;
-      if (location) complaint.location = location;
-
-      // ✅ Handle optional image uploads
-      if (req.files && req.files.length > 0) {
-        const uploadPromises = req.files.map((file) => uploadOnCloudinary(file.path));
-        const uploadResults = await Promise.all(uploadPromises);
-        const imageUrls = uploadResults.map((r) => r.secure_url);
-        complaint.images.push(...imageUrls);
-      }
-    } else {
-      // ✅ Staff/Admin can modify everything
-      if (description) complaint.description = description;
-      if (location) complaint.location = location;
-      if (status) complaint.status = status;
-      if (type) complaint.type = type;
+    // Update fields
+    if (type) complaint.type = type;
+    if (description) complaint.description = description;
+    if (latitude && longitude) {
+      complaint.location = {
+        type: "Point",
+        coordinates: [parseFloat(longitude), parseFloat(latitude)],
+        address: address || complaint.location.address,
+      };
     }
 
     await complaint.save();
 
     return res.status(200).json({
       success: true,
-      message: "Complaint updated successfully",
-      complaint,
+      message: "Complaint updated successfully.",
+      data: complaint,
     });
   } catch (error) {
     console.error("Error updating complaint:", error);
     return res.status(500).json({
       success: false,
-      message: "Server error while updating complaint",
-      error: error.message,
+      message: "Server error while updating complaint.",
+    });
+  }
+};
+
+
+export const updateComplaintStatus = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { status } = req.body;
+
+    const validStatuses = ["OPEN", "IN PROGRESS", "RESOLVED", "REJECTED"];
+    if (!validStatuses.includes(status)) {
+      return res.status(400).json({
+        success: false,
+        message: "Invalid status. Must be OPEN, IN PROGRESS, RESOLVED, or REJECTED.",
+      });
+    }
+
+    const complaint = await Complaint.findByIdAndUpdate(
+      id,
+      { status },
+      { new: true }
+    ).populate("citizenId", "firstName lastName email");
+
+    if (!complaint) {
+      return res.status(404).json({
+        success: false,
+        message: "Complaint not found.",
+      });
+    }
+
+    const citizen = complaint.citizenId;
+    if (citizen && citizen.email) {
+      const htmlTemplate = complaintStatusUpdatedEmail(
+        citizen.firstName,
+        complaint.type,
+        status,
+        complaint._id
+      );
+
+      console.log("Sending mail to:", citizen.email);
+
+      await mailSender(
+        citizen.email,
+        `Your Complaint Status Has Been Updated to "${status}"`,
+        htmlTemplate
+      );
+
+      console.log("Mail sent successfully to:", citizen.email);
+    }
+
+    return res.status(200).json({
+      success: true,
+      message: "Complaint status updated and email sent successfully.",
+      data: complaint,
+    });
+  } catch (error) {
+    console.error("Error updating complaint status:", error);
+    return res.status(500).json({
+      success: false,
+      message: "Server error while updating status.",
+    });
+  }
+};
+
+
+export const getComplaintsGeoJSON = async (req, res) => {
+  try {
+    const complaints = await Complaint.find({
+      "location.coordinates": { $exists: true, $ne: [] },
+    });
+
+    const features = complaints.map((c) => ({
+      type: "Feature",
+      geometry: {
+        type: "Point",
+        coordinates: c.location.coordinates, 
+      },
+      properties: {
+        id: c._id,
+        type: c.type,
+        status: c.status,
+        createdAt: c.createdAt,
+        address: c.location.address,
+      },
+    }));
+
+    return res.status(200).json({
+      type: "FeatureCollection",
+      features,
+    });
+  } catch (error) {
+    console.error("Error generating GeoJSON:", error);
+    return res.status(500).json({
+      success: false,
+      message: "Failed to generate GeoJSON data for heatmap.",
     });
   }
 };

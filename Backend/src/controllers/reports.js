@@ -1,4 +1,4 @@
-import { Complaint } from "../models/complaint.js";
+import { Complaint } from "../models/Complaint.js";
 import {Parser} from "json2csv";
 import PDFDocument from "pdfkit";
 
