@@ -131,12 +131,22 @@ const ComplaintDetails = () => {
           <input
             type="text"
             name="location"
-            value={formData.location}
-            onChange={handleChange}
+            value={formData.location?.address || formData.location || ""}
+            onChange={(e) =>
+              setFormData({
+                ...formData,
+                location: {
+                  ...(formData.location || {}),
+                  address: e.target.value,
+                },
+              })
+            }
             className="w-full border border-gray-300 rounded-lg p-3 focus:ring-2 focus:ring-circus-red focus:outline-none"
           />
         ) : (
-          <p className="text-gray-700">{complaint.location}</p>
+          <p className="text-gray-700">
+            {complaint.location?.address || "No address available"}
+          </p>
         )}
       </div>
 
