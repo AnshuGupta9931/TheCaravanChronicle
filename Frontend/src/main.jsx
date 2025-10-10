@@ -14,6 +14,7 @@ import { Toaster } from "react-hot-toast";
 import rootReducer from "./reducers/index.jsx";
 import "./index.css";
 
+// -------------------- Landing Pages --------------------
 import Layout from "./components/Landing/Layout.jsx";
 import { Home } from "./components/Landing/Home.jsx";
 import { Login } from "./components/Landing/Login.jsx";
@@ -22,10 +23,7 @@ import { VerifyEmail } from "./components/Landing/VerifyEmail.jsx";
 import AboutUs from "./components/Landing/AboutUs.jsx";
 import ContactUs from "./components/Landing/ContactUs.jsx";
 
-<<<<<<< HEAD
-=======
-// -------------------- Dashboard Layout --------------------
->>>>>>> 3169489 (Staff feature ready)
+// -------------------- Protected Components --------------------
 import PrivateRoute from "./components/core/Auth/PrivateRoute.jsx";
 import Dashboard from "./pages/Dashboard.jsx";
 import Profile from "./pages/Profile.jsx";
@@ -34,33 +32,29 @@ import Profile from "./pages/Profile.jsx";
 import CitizenDashboard from "./pages/CitizenDashboard.jsx";
 import ComplaintForm from "./components/Dashboards/ComplaintForm.jsx";
 import MyComplaintsView from "./components/Dashboards/MyComplaintsView.jsx";
+import ComplaintDetails from "./pages/ComplaintDetails.jsx";
+
 // -------------------- Staff Pages --------------------
 import StaffDashboard from "./pages/StaffDashboard.jsx";
 import StaffComplaints from "./pages/StaffComplaints.jsx";
-import ComplaintDetails from "./pages/ComplaintDetails.jsx";
-<<<<<<< HEAD
-import Profile from "./pages/Profile.jsx";
 
+// -------------------- Admin Pages --------------------
 import AdminDashboard from "./pages/Admin/AdminDashboard.jsx";
 import AdminProfile from "./pages/Admin/AdminProfile.jsx";
 import AllComplaints from "./pages/Admin/AllComplaints.jsx";
 import StaffRequests from "./pages/Admin/StaffRequests.jsx";
 import AdminComplaintDetails from "./pages/Admin/AdminComplaintDetails.jsx";
 
+// -------------------- Shared Pages --------------------
 import ComplaintHeatmap from "./pages/ComplaintHeatmap.jsx";
-=======
 
-// -------------------- Staff Manager Pages --------------------
-// import StaffManagerDashboard from "./pages/StaffManagerDashboard.jsx";
-// import AssignComplaints from "./components/StaffManager/AssignComplaints.jsx";
-
-// -------------------- Admin Pages --------------------
-//import AdminDashboard from "./pages/AdminDashboard.jsx";
->>>>>>> 3169489 (Staff feature ready)
-
+// -----------------------------------------------------------------------
+// ROUTER CONFIGURATION
+// -----------------------------------------------------------------------
 const router = createBrowserRouter(
   createRoutesFromElements(
     <>
+      {/* ------------------ 1. PUBLIC ROUTES ------------------ */}
       <Route path="/" element={<Layout />}>
         <Route index element={<Home />} />
         <Route path="login" element={<Login />} />
@@ -70,64 +64,35 @@ const router = createBrowserRouter(
         <Route path="contact" element={<ContactUs />} />
       </Route>
 
-<<<<<<< HEAD
-=======
       {/* ------------------ 2. CITIZEN DASHBOARD ------------------ */}
->>>>>>> 3169489 (Staff feature ready)
       <Route
         path="/dashboard"
-        element={
-          <PrivateRoute element={<Dashboard />} allowedRoles={["Citizen"]} />
-        }
+        element={<PrivateRoute element={<Dashboard />} allowedRoles={["Citizen"]} />}
       >
         <Route index element={<CitizenDashboard />} />
         <Route
           path="create-complaint"
-          element={
-            <PrivateRoute
-              element={<ComplaintForm />}
-              allowedRoles={["Citizen"]}
-            />
-          }
+          element={<PrivateRoute element={<ComplaintForm />} allowedRoles={["Citizen"]} />}
         />
         <Route
           path="my-complaints"
-          element={
-            <PrivateRoute
-              element={<MyComplaintsView />}
-              allowedRoles={["Citizen"]}
-            />
-          }
+          element={<PrivateRoute element={<MyComplaintsView />} allowedRoles={["Citizen"]} />}
         />
         <Route
           path="complaint/:id"
-          element={
-            <PrivateRoute
-              element={<ComplaintDetails />}
-              allowedRoles={["Citizen", "Admin", "Staff"]}
-            />
-          }
+          element={<PrivateRoute element={<ComplaintDetails />} allowedRoles={["Citizen", "Admin", "Staff"]} />}
         />
         <Route
           path="profile"
-          element={
-            <PrivateRoute element={<Profile />} allowedRoles={["Citizen"]} />
-          }
+          element={<PrivateRoute element={<Profile />} allowedRoles={["Citizen"]} />}
         />
       </Route>
 
-<<<<<<< HEAD
-=======
       {/* ------------------ 3. STAFF DASHBOARD ------------------ */}
->>>>>>> 3169489 (Staff feature ready)
       <Route
         path="/staff"
-        element={
-          <PrivateRoute element={<Dashboard />} allowedRoles={["Staff"]} />
-        }
+        element={<PrivateRoute element={<Dashboard />} allowedRoles={["Staff"]} />}
       >
-<<<<<<< HEAD
-=======
         <Route index element={<StaffDashboard />} />
         <Route
           path="complaints"
@@ -137,89 +102,43 @@ const router = createBrowserRouter(
           path="complaint/:id"
           element={<PrivateRoute element={<ComplaintDetails />} allowedRoles={["Staff"]} />}
         />
->>>>>>> 3169489 (Staff feature ready)
         <Route
           path="profile"
-          element={
-            <PrivateRoute element={<Profile />} allowedRoles={["Staff"]} />
-          }
+          element={<PrivateRoute element={<Profile />} allowedRoles={["Staff"]} />}
         />
       </Route>
 
-<<<<<<< HEAD
-=======
-      {/* ------------------ 4. STAFF MANAGER DASHBOARD ------------------ */}
-      <Route
-        path="/manager"
-        element={<PrivateRoute element={<Dashboard />} allowedRoles={["StaffManager"]} />}
-      >
-        <Route index element={<StaffDashboard />} />
-        {/* <Route
-          path="assign"
-          element={<PrivateRoute element={<AssignComplaints />} allowedRoles={["StaffManager"]} />}
-        /> */}
-        <Route
-          path="profile"
-          element={<PrivateRoute element={<Profile />} allowedRoles={["StaffManager"]} />}
-        />
-      </Route>
-
-      {/* ------------------ 5. ADMIN DASHBOARD ------------------ */}
->>>>>>> 3169489 (Staff feature ready)
+      {/* ------------------ 4. ADMIN DASHBOARD ------------------ */}
       <Route
         path="/admin"
-        element={
-          <PrivateRoute element={<Dashboard />} allowedRoles={["Admin"]} />
-        }
+        element={<PrivateRoute element={<Dashboard />} allowedRoles={["Admin"]} />}
       >
-<<<<<<< HEAD
         <Route index element={<AdminDashboard />} />
-=======
-        
->>>>>>> 3169489 (Staff feature ready)
         <Route
           path="profile"
-          element={
-            <PrivateRoute element={<AdminProfile />} allowedRoles={["Admin"]} />
-          }
+          element={<PrivateRoute element={<AdminProfile />} allowedRoles={["Admin"]} />}
         />
         <Route
           path="all-complaints"
-          element={
-            <PrivateRoute element={<AllComplaints />} allowedRoles={["Admin"]} />
-          }
+          element={<PrivateRoute element={<AllComplaints />} allowedRoles={["Admin"]} />}
         />
         <Route
           path="complaint/:id"
-          element={
-            <PrivateRoute
-              element={<AdminComplaintDetails />}
-              allowedRoles={["Admin"]}
-            />
-          }
+          element={<PrivateRoute element={<AdminComplaintDetails />} allowedRoles={["Admin"]} />}
         />
         <Route
           path="requests"
-          element={
-            <PrivateRoute element={<StaffRequests />} allowedRoles={["Admin"]} />
-          }
+          element={<PrivateRoute element={<StaffRequests />} allowedRoles={["Admin"]} />}
         />
       </Route>
 
-<<<<<<< HEAD
+      {/* ------------------ 5. HEATMAP ------------------ */}
       <Route
         path="/heatmap"
-        element={
-          <PrivateRoute
-            element={<ComplaintHeatmap />}
-            allowedRoles={["Admin", "Staff", "Citizen"]}
-          />
-        }
+        element={<PrivateRoute element={<ComplaintHeatmap />} allowedRoles={["Admin", "Staff", "Citizen"]} />}
       />
 
-=======
       {/* ------------------ 6. 404 FALLBACK ------------------ */}
->>>>>>> 3169489 (Staff feature ready)
       <Route
         path="*"
         element={
@@ -232,10 +151,16 @@ const router = createBrowserRouter(
   )
 );
 
+// -----------------------------------------------------------------------
+// REDUX STORE SETUP
+// -----------------------------------------------------------------------
 const store = configureStore({
   reducer: rootReducer,
 });
 
+// -----------------------------------------------------------------------
+// ROOT RENDER
+// -----------------------------------------------------------------------
 createRoot(document.getElementById("root")).render(
   <StrictMode>
     <Provider store={store}>

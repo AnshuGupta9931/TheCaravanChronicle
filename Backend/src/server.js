@@ -11,12 +11,9 @@ import reportRoutes from "./routes/reports.js";
 import complaintRoutes from "./routes/complaints.js";
 import userRoutes from "./routes/users.js";
 import profileRoutes from "./routes/ProfileRoutes.js";
-<<<<<<< HEAD
-import adminRoutes from "./routes/adminRoutes.js";
+import adminRoutes from "./routes/adminRoutes.js";  // ✅ keep admin routes
+import staffRoutes from "./routes/staffRoutes.js";  // ✅ also keep staff routes
 
-=======
-import staffRoutes from "./routes/staffRoutes.js";
->>>>>>> 3169489 (Staff feature ready)
 // ------------------------------
 // ✅ Setup __dirname for ES Modules
 // ------------------------------
@@ -49,11 +46,8 @@ app.use("/api/v1/reports", reportRoutes);
 app.use("/api/v1/complaints", complaintRoutes);
 app.use("/api/v1/auth", userRoutes);
 app.use("/api/v1/profile", profileRoutes);
-<<<<<<< HEAD
-app.use("/api/v1/admin",adminRoutes);
-=======
+app.use("/api/v1/admin", adminRoutes);
 app.use("/api/v1/staff", staffRoutes);
->>>>>>> 3169489 (Staff feature ready)
 
 // ------------------------------
 // ✅ Serve Uploaded Files (Images)

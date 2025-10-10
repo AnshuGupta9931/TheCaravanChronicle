@@ -1,27 +1,30 @@
-<<<<<<< HEAD
-// src/services/operations/staffAPI.js
+// src/services/operations/staffAPI.jsx
+import axios from "axios";
 import { apiConnector } from "../apiconnector.jsx";
 
-const BASE_URL = "http://localhost:8000/api/v1/admin";
+/* -------------------------------------------------------------------------- */
+/* 🌐 Base URLs */
+/* -------------------------------------------------------------------------- */
+const ADMIN_BASE_URL = "http://localhost:8000/api/v1/admin";
+const STAFF_BASE_URL = "http://localhost:8000/api/v1/staff";
 
+/* -------------------------------------------------------------------------- */
+/* 👩‍💼 ADMIN STAFF MANAGEMENT ENDPOINTS */
+/* -------------------------------------------------------------------------- */
 export const staffEndpoints = {
-  GET_PENDING_REQUESTS: BASE_URL + "/get-pending-requests",
-  APPROVE_STAFF: BASE_URL + "/approve-staff",
-  REJECT_STAFF: BASE_URL + "/reject-staff",
-  UPDATE_STAFF: (userId) => BASE_URL + `/update-staff/${userId}`,
-  DELETE_STAFF: (userId) => BASE_URL + `/delete-staff/${userId}`,
+  GET_PENDING_REQUESTS: ADMIN_BASE_URL + "/get-pending-requests",
+  APPROVE_STAFF: ADMIN_BASE_URL + "/approve-staff",
+  REJECT_STAFF: ADMIN_BASE_URL + "/reject-staff",
+  UPDATE_STAFF: (userId) => ADMIN_BASE_URL + `/update-staff/${userId}`,
+  DELETE_STAFF: (userId) => ADMIN_BASE_URL + `/delete-staff/${userId}`,
 };
-
-/* -------------------------------------------------------------------------- */
-/* 🧰 Staff / Admin Operations */
-/* -------------------------------------------------------------------------- */
 
 // ✅ Get all pending staff requests
 export const getPendingRequests = async () => {
   try {
     const response = await apiConnector("GET", staffEndpoints.GET_PENDING_REQUESTS);
     console.log("📡 getPendingRequests response:", response.data);
-    return response.data.data; // always array
+    return response.data.data;
   } catch (error) {
     console.error("❌ Error fetching pending staff:", error);
     return [];
@@ -76,32 +79,36 @@ export const deleteStaffAccount = async (userId) => {
     console.error("❌ Error deleting staff:", error);
     throw error;
   }
-=======
-import axios from "axios";
-const BASE_URL = "http://localhost:8000/api/v1/staff";
+};
 
+/* -------------------------------------------------------------------------- */
+/* 🧰 STAFF DASHBOARD OPERATIONS */
+/* -------------------------------------------------------------------------- */
+
+// ✅ Fetch dashboard stats for staff
 export const getStaffDashboardAPI = async (token) => {
-  const { data } = await axios.get(`${BASE_URL}/dashboard`, {
+  const { data } = await axios.get(`${STAFF_BASE_URL}/dashboard`, {
     headers: { Authorization: `Bearer ${token}` },
   });
   return data.dashboard;
 };
 
+// ✅ Fetch complaints assigned to staff
 export const getStaffComplaintsAPI = async (token, status) => {
-  const { data } = await axios.get(`${BASE_URL}/complaints?status=${status}`, {
+  const { data } = await axios.get(`${STAFF_BASE_URL}/complaints?status=${status}`, {
     headers: { Authorization: `Bearer ${token}` },
   });
   return data.complaints;
 };
 
+// ✅ Update status of a specific complaint
 export const updateComplaintStatusAPI = async (token, complaintId, status) => {
   const { data } = await axios.put(
-    `${BASE_URL}/complaints/${complaintId}/status`,
+    `${STAFF_BASE_URL}/complaints/${complaintId}/status`,
     { status },
     {
       headers: { Authorization: `Bearer ${token}` },
     }
   );
   return data.complaint;
->>>>>>> 3169489 (Staff feature ready)
 };
